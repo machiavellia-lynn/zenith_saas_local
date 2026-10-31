@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.local
+
+
+# scratch + credentials (never commit)
+_probe*/
+*.log
+tasks/stockbit/

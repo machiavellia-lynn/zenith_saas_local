@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<script>(function(){var t=localStorage.getItem('zenith-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenith — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/sidebar.css">
+<link rel="stylesheet" href="/static/components.css">
+<style>
+html, body { height: 100%; }
+
+.pf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+
+/* IHSG benchmark line — matches the Zenith card on the public portfolio site
+   (mybiolink /projects) so the two read as the same chart language. Single
+   mid-grey that holds up on both light and dark surfaces. */
+:root { --pf-bench: #9aa2ac; }
+[data-theme="dark"] { --pf-bench: #7c8592; }
+
+/* Algo toggle chips */
+.pf-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  transition: all .15s; user-select: none; border: 1.5px solid var(--border);
+  background: var(--surface2);
+}
+.pf-chip-dot { width: 10px; height: 10px; border-radius: 99px; background: var(--border2); flex-shrink: 0; transition: background .15s; }
+.pf-chip-label { font-size: 13px; font-weight: 400; color: var(--muted); }
+.pf-chip-ret { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--muted); }
+
+/* Stats panel */
+.pf-stats { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; overflow: hidden; }
+.pf-stats-col { flex: 1; padding: 16px 22px; }
+.pf-stats-col + .pf-stats-col { border-left: 1px solid var(--border); }
+.pf-stats-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.pf-stats-rows { display: flex; flex-direction: column; gap: 11px; }
+.pf-stats-row { display: flex; justify-content: space-between; align-items: center; }
+.pf-stats-label { font-size: 12.5px; color: var(--text-dim); }
+.pf-stats-val { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--ink); }
+.pf-stats-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* Trade log */
+.pf-segwrap { display: flex; gap: 2px; background: var(--surface2); padding: 3px; border-radius: 10px; border: 1px solid var(--border); }
+.pf-seg { padding: 5px 14px; font-size: 12.5px; border-radius: 8px; cursor: pointer; transition: all .15s;
+  color: var(--text-dim); font-weight: 400; display: flex; align-items: center; gap: 6px; }
+.pf-seg.active { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.pf-seg-count { font-family: var(--font-mono); font-size: 10px; color: var(--muted); background: var(--surface2); padding: 1px 6px; border-radius: 99px; }
+.pf-seg.active .pf-seg-count { color: var(--accent); }
+
+.pf-filt { padding: 5px 11px; border-radius: 7px; font-size: 12px; cursor: pointer; transition: all .15s;
+  background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); font-weight: 400; }
+.pf-filt.active { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 500; }
+
+.pf-viewmode-btn { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 7px; font-size: 12px; cursor: pointer;
+  background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); font-weight: 400; transition: all .15s; }
+.pf-viewmode-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+.pf-month-row, .pf-date-row { display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: pointer; border-top: 1px solid var(--border); transition: background .1s; }
+.pf-month-row:hover, .pf-date-row:hover { background: var(--surface2); }
+.pf-date-row { padding-left: 36px; background: var(--surface2); }
+.pf-date-row:hover { background: var(--surface3); }
+.pf-grp-chevron { width: 14px; height: 14px; flex-shrink: 0; color: var(--muted); transition: transform .15s; display: flex; align-items: center; justify-content: center; }
+.pf-grp-chevron.open { transform: rotate(90deg); }
+.pf-grp-label { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1; }
+.pf-date-row .pf-grp-label { font-size: 12.5px; font-weight: 500; }
+.pf-grp-count { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); background: var(--surface); padding: 2px 7px; border-radius: 99px; border: 1px solid var(--border); }
+.pf-grp-pnl { font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; min-width: 76px; text-align: right; }
+.pf-date-body { border-top: 1px solid var(--border); }
+
+.pf-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.pf-th { padding: 10px 12px; text-align: right; font-weight: 600; font-size: 11px; color: var(--text-dim);
+  background: var(--surface2); border-bottom: 1px solid var(--border); letter-spacing: .04em;
+  text-transform: uppercase; cursor: pointer; user-select: none; white-space: nowrap; }
+.pf-th.left { text-align: left; }
+.pf-th.center { text-align: center; }
+.pf-th.active-sort { color: var(--ink); }
+.pf-td { padding: 10px 12px; font-family: var(--font-mono); white-space: nowrap; }
+.pf-row { border-bottom: 1px solid var(--border); transition: background .1s; }
+.pf-row:hover { background: var(--surface2); }
+
+.pf-badge { display: inline-flex; padding: 3px 9px; border-radius: 6px; font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; }
+.pf-setup-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; }
+
+@keyframes pfSpin { to { transform: rotate(360deg); } }
+.pf-spinner { width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent);
+  border-radius: 99px; display: inline-block; animation: pfSpin .6s linear infinite; vertical-align: middle; }
+@keyframes pfDotPulse {
+  0%   { r: 5px; stroke-opacity: 0.6; }
+  100% { r: 20px; stroke-opacity: 0; }
+}
+
+/* Closed / Open toggle inside stats head */
+.pf-stat-tab { padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;
+  border:none;background:none;color:var(--text-dim);font-weight:400;transition:all .12s; }
+.pf-stat-tab.active { background:var(--surface);color:var(--ink);font-weight:600;
+  box-shadow:0 1px 4px rgba(0,0,0,.07); }
+
+/* Gear / settings panel */
+.pf-gear-panel {
+  position: fixed; z-index: 9001;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  padding: 18px 20px; min-width: 290px;
+}
+.pfg-section { font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin:12px 0 8px; }
+.pfg-row { display:flex;align-items:center;gap:8px;margin-bottom:7px; }
+.pfg-label { font-size:12px;color:var(--text-dim);flex:1; }
+.pfg-input { font-family:var(--font-mono);font-size:12px;color:var(--ink);
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:4px 8px;width:110px;text-align:right;-moz-appearance:textfield; }
+.pfg-input:focus { outline:none;border-color:var(--accent); }
+.pfg-input::-webkit-inner-spin-button,.pfg-input::-webkit-outer-spin-button { -webkit-appearance:none; }
+.pfg-suffix { font-size:11px;color:var(--muted);width:18px;flex-shrink:0; }
+</style>
+</head>
+<body class="sidebar-layout">
+{% include 'sidebar.html' %}
+
+<div class="main-content">
+  <div class="page-header">
+    <div>
+      <div class="page-subtitle">Capital growth simulation · Wyckoff &amp; BSJP</div>
+      <h1 class="page-title">Portfolio Simulation</h1>
+    </div>
+    <div class="page-header-actions">
+      <span style="font-size:11.5px;color:var(--muted)">Period</span>
+      <div id="pfDatePicker"></div>
+      <button id="pfGearBtn" type="button" title="Simulation settings"
+              style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+                     background:var(--surface);color:var(--muted);cursor:pointer;
+                     display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="7" cy="7" r="2"/>
+          <path d="M7 1v1M7 12v1M1 7h1M12 7h1M2.9 2.9l.7.7M10.4 10.4l.7.7M11.1 2.9l-.7.7M3.6 10.4l-.7.7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="page-body" style="padding:20px 28px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- ── Equity Curve ── -->
+    <div class="pf-card">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="pfChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></div>
+        <div style="flex:1"></div>
+        <span id="pfComputed" style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div style="height:340px;padding:16px 12px 10px">
+        <div id="pfChartInner" style="position:relative;width:100%;height:100%"></div>
+      </div>
+    </div>
+
+    <!-- ── Stats Panel ── -->
+    <div id="pfStats" class="pf-stats" style="display:none"></div>
+
+    <!-- ── Trade Log ── -->
+    <div class="pf-card" id="pfTradeCard" style="display:none">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div class="pf-segwrap" id="pfTabs"></div>
+        <div id="pfStatusFilter" style="display:flex;gap:4px"></div>
+        <div class="pf-viewmode-btn" id="pfViewModeBtn">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1.5" width="10" height="2.5" rx="1"/><rect x="1" y="5" width="10" height="2.5" rx="1"/><rect x="1" y="8.5" width="6" height="2.5" rx="1"/></svg>
+          <span id="pfViewModeLbl">Group by month</span>
+        </div>
+        <div style="flex:1"></div>
+        <span id="pfTabInfo" style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div id="pfTableWrap" style="overflow-x:auto"></div>
+      <div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);flex-wrap:wrap;gap:8px">
+        <span id="pfAllocFoot">Lot size IDX = 100 shares</span>
+        <span style="font-family:var(--font-mono);font-size:11px">Click header to sort</span>
+      </div>
+    </div>
+
+    <!-- ── Status / empty ── -->
+    <div id="pfStatus" class="empty-state">
+      <span class="pf-spinner"></span> &nbsp;Calculating portfolio simulation…
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/zenith-utils.js"></script>
+<script src="/static/shortcuts.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ── Algo + setup definitions ────────────────────────────────────────────── */
+var PF_ALGOS = [
+  { id:'wyckoff', label:'Wyckoff', color:'#4a8fdb' },
+  { id:'bsjp',    label:'BSJP',    color:'#e8923a' },
+];
+// Real algo setup names → simplified display names (kita sederhanakan)
+var SETUP_NAMES = {
+  POWER_BREAK_V21:   'BREAKOUT_MA5',
+  POWER_BREAK_V22:   'BREAKOUT_SIDEWAYS',
+  SMA5_BREAKOUT_V13: 'TRENDING_PREV_HIGH',
+  SMA5_BREAKOUT_V11: 'CROSS_MA5',
+  BB_PULLBACK:       'PULLBACK_BB',
+  SMA5_PULLBACK_V12: 'PULLBACK_MA5',
+};
+var SETUP_COL = {
+  BREAKOUT_MA5:'#3a6b58', BREAKOUT_SIDEWAYS:'#4a7fdb', TRENDING_PREV_HIGH:'#2a7a5a',
+  CROSS_MA5:'#c8633a', PULLBACK_BB:'#8252c8', PULLBACK_MA5:'#3a6fbb',
+};
+function setupName(k){ return SETUP_NAMES[k] || k || '—'; }
+function setupCol(k){ return SETUP_COL[setupName(k)] || 'var(--muted)'; }
+
+/* ── State ───────────────────────────────────────────────────────────────── */
+var PAGE_SIZE = 30;
+var S = {
+  data: null,   // raw server response — always simulated at the server-side default budget
+  view: null,   // S.data rescaled to S.prefs' budget — what actually gets rendered
+  active: { wyckoff:true, bsjp:true },
+  tab: 'wyckoff',
+  statusFilter: 'all',
+  wySort: { col:'gain', asc:false },
+  bsSort: { col:'gain', asc:false },
+  wyPage: 1, bsPage: 1,   // how many PAGE_SIZE chunks to show
+  viewMode: 'flat',       // 'flat' | 'month'
+  showIhsg: true,         // dashed benchmark overlay on the equity chart
+  expMonths: {}, expDates: {},
+  dateFrom: '', dateTo: '',
+  loading: false,
+  prefs: null,
+  wyStatTab: 'closed',
+};
+
+/* ── Server-side defaults (mirrors config.py — dev/code-only, never sent to the API) ──
+   The server ALWAYS simulates at exactly these values; nothing in the browser can
+   change what it computes or fetches. Two roles here:
+     1. denominator for the client-side what-if scale ratio (viewData below), and
+     2. the target the gear panel's "Reset" restores to.
+   Keep in sync with config.py's PF_* constants — changing them there is a code
+   deploy, which is the point. */
+var SRV_DEFAULTS = {
+  bsjp_capital: 150000000, bsjp_alloc: 30000000,
+  wyckoff_alloc: 5000000,  wyckoff_basis: 1000000000,
+};
+
+/* ── Preferences ──────────────────────────────────────────────────────────── */
+// Key is versioned: v1 persisted wyckoff_basis 2500000000, v2 persisted
+// bsjp_alloc 15000000 — a stored pref overrides PREFS_DEF, so without a new
+// key an existing browser would keep the old default and silently understate
+// what the server-side default now actually deploys per signal.
+var PREFS_KEY = 'zenith_pf_prefs_v3';
+// Budget defaults are derived from SRV_DEFAULTS (not re-typed) so "Reset" always
+// lands exactly on the server-side simulation basis and the two can never drift.
+var PREFS_DEF = Object.assign({}, SRV_DEFAULTS, {
+  fees_enabled: true,
+  fee_buy: 0.15, fee_sell: 0.25, fee_pph: 0.10,
+});
+S.prefs = Object.assign({}, PREFS_DEF, JSON.parse(localStorage.getItem(PREFS_KEY) || 'null') || {});
+
+/* ── Client-side what-if rescale ─────────────────────────────────────────────
+   S.data (server response, always at SRV_DEFAULTS budget) → S.view (rescaled to
+   S.prefs). Pure arithmetic on top of already-fetched trades/equity — no network
+   call, can't touch the API key.
+
+   Every money figure here is derived from the SAME per-trade recompute
+   (scaleTrades), not scaled independently — that's what guarantees lots ×
+   entry price always equals the displayed Value, and the stats panel always
+   equals the sum of the visible trade log. Previously lots was `round(server
+   lots × ratio)` while Value/P&L were separately `round(server value × ratio)`
+   — two different roundings of two different quantities, so they could (and
+   did — see KKGI: 278 × 36 lot × 100 should be Rp 1.000.800, card showed
+   999K) disagree.
+
+   The one figure that genuinely can't be derived this way is the equity
+   curve's shape: reconstructing it exactly needs the full day-by-day walk
+   (Wyckoff's mark-to-market in particular), which the client doesn't have.
+   curveScale anchors the curve to the exact recomputed gross total instead of
+   the raw alloc ratio, so the chart's rightmost point still matches
+   final_equity exactly — only the path between window-start and window-end is
+   an approximation. */
+var PF_LOT_SIZE = 100;   // IDX lot size — mirrors config.py PF_LOT_SIZE
+
+function tradeFeeRp(t){
+  // Fees apply once a trade is CLOSED — an open position hasn't paid the sell
+  // leg or PPh final yet, so its unrealized P&L stays fee-free until exit.
+  if (!S.prefs.fees_enabled || t.status === 'OPEN') return 0;
+  var p = S.prefs;
+  var bv = (t.lots||0) * PF_LOT_SIZE * (t.entry_price||0);
+  var sv = (t.lots||0) * PF_LOT_SIZE * (t.exit_price||0);
+  var fee = bv * (p.fee_buy/100) + sv * ((p.fee_sell + p.fee_pph)/100);
+  if (bv > 10000000) fee += 10000;   // bea meterai, buy leg
+  if (sv > 10000000) fee += 10000;   // bea meterai, sell leg
+  return Math.round(fee);
+}
+
+function scaleTrades(trades, allocRp){
+  return (trades || []).map(function(t){
+    var entry = t.entry_price || 0;
+    var exit  = t.exit_price != null ? t.exit_price : entry;
+    // Re-lot EXACTLY at the custom budget — same floor(alloc/(price*lotSize))
+    // the server uses — instead of scaling the server's already-floored lot
+    // count by a ratio and separately re-rounding the money fields.
+    var lots = entry > 0 ? Math.max(1, Math.floor(allocRp / (entry * PF_LOT_SIZE))) : (t.lots || 1);
+    var txnValue = Math.round(lots * PF_LOT_SIZE * entry);
+    var grossPnl = lots * PF_LOT_SIZE * (exit - entry);
+    var scaled = Object.assign({}, t, { lots: lots, txn_value: txnValue, gross_pnl_rp: Math.round(grossPnl) });
+    var fee = tradeFeeRp(scaled);
+    scaled.fee_rp = fee;
+    scaled.pnl_rp = Math.round(grossPnl - fee);
+    return scaled;
+  });
+}
+
+function scaleStats(rawSt, trades, ratio, customBasis){
+  var closed = trades.filter(function(t){ return t.status !== 'OPEN'; });
+  var open   = trades.filter(function(t){ return t.status === 'OPEN'; });
+  var wins   = closed.filter(function(t){ return (t.gain||0) > 0; });
+  var losses = closed.filter(function(t){ return (t.gain||0) <= 0; });
+
+  var finalPnl   = trades.reduce(function(s,t){ return s+(t.pnl_rp||0); }, 0);
+  var grossFinal = trades.reduce(function(s,t){ return s+(t.gross_pnl_rp||0); }, 0);
+  var realized   = closed.reduce(function(s,t){ return s+(t.pnl_rp||0); }, 0);
+  var deployed   = open.reduce(function(s,t){ return s+(t.lots||0)*PF_LOT_SIZE*(t.entry_price||0); }, 0);
+  var totalFees  = trades.reduce(function(s,t){ return s+(t.fee_rp||0); }, 0);
+  var totalTxn   = trades.reduce(function(s,t){ return s+(t.txn_value||0); }, 0);
+
+  // Profit factor is intentionally GROSS (fee-free) — a measure of the
+  // strategy's raw edge, independent of whatever fee assumptions are dialled in.
+  function grossOf(t){ return t.lots * PF_LOT_SIZE * (t.exit_price - t.entry_price); }
+  var grossW = wins.reduce(function(s,t){ return s+grossOf(t); }, 0);
+  var grossL = Math.abs(losses.reduce(function(s,t){ return s+grossOf(t); }, 0));
+
+  var holdSrc = closed.filter(function(t){ return t.hold_days != null; });
+  var avgHold = holdSrc.length
+    ? Math.round(holdSrc.reduce(function(s,t){ return s+t.hold_days; },0)/holdSrc.length*10)/10
+    : null;
+
+  var curveScale = Math.abs(rawSt.final_equity||0) >= 1 ? grossFinal/rawSt.final_equity : ratio;
+  var maxDdRp = rawSt.max_drawdown_rp != null ? Math.round(rawSt.max_drawdown_rp * curveScale) : null;
+
+  return {
+    initial_equity:    customBasis,
+    final_equity:      Math.round(finalPnl),
+    total_return_pct:  customBasis ? Math.round(finalPnl/customBasis*10000)/100 : 0,
+    win_rate:          closed.length ? Math.round(wins.length/closed.length*1000)/10 : null,
+    avg_hold:          avgHold,
+    profit_factor:     grossL > 0 ? Math.round(grossW/grossL*100)/100 : null,
+    max_drawdown_pct:  null,
+    max_drawdown_rp:   maxDdRp,
+    total_txn_value:   Math.round(totalTxn),
+    total_fees:        totalFees,
+    open_count:        open.length,
+    closed_count:      closed.length,
+    total_trades:      trades.length,
+    available_balance: Math.round(customBasis + realized - deployed),
+    total_equity:      Math.round(customBasis + finalPnl),
+    _curveScale:       curveScale,
+    _totalFees:        totalFees,
+  };
+}
+
+function scaleEquityCurve(rawCurve, curveScale, totalFees){
+  var n = rawCurve.length;
+  return rawCurve.map(function(v, i){
+    var feeDrag = n > 1 ? totalFees * (i/(n-1)) : totalFees;
+    return Math.round(v*curveScale - feeDrag);
+  });
+}
+
+function viewData(){
+  if (!S.data) return null;
+  var raw = S.data, p = S.prefs;
+  var rBs = p.bsjp_alloc    / SRV_DEFAULTS.bsjp_alloc;
+  var rWy = p.wyckoff_alloc / SRV_DEFAULTS.wyckoff_alloc;
+
+  var wyTrades = scaleTrades(raw.wyckoff.trades, p.wyckoff_alloc);
+  var bsTrades = scaleTrades(raw.bsjp.trades,    p.bsjp_alloc);
+  var wyStats  = scaleStats(raw.wyckoff.stats, wyTrades, rWy, p.wyckoff_basis);
+  var bsStats  = scaleStats(raw.bsjp.stats,    bsTrades, rBs, p.bsjp_capital);
+
+  return {
+    equity: {
+      labels:  raw.equity.labels,
+      wyckoff: scaleEquityCurve(raw.equity.wyckoff, wyStats._curveScale, wyStats._totalFees),
+      bsjp:    scaleEquityCurve(raw.equity.bsjp,    bsStats._curveScale, bsStats._totalFees),
+    },
+    wyckoff: { stats: wyStats, trades: wyTrades },
+    bsjp:    { stats: bsStats, trades: bsTrades },
+    // IHSG is an index level, not money — never scaled by the budget what-if.
+    ihsg: raw.ihsg || null,
+    axis_dates: raw.axis_dates, date_range: raw.date_range, computed_at: raw.computed_at,
+  };
+}
+
+/* ── Formatters ──────────────────────────────────────────────────────────── */
+function fmtRp(v){ return v==null ? '—' : 'Rp ' + Math.round(v).toLocaleString('id-ID'); }
+function fmtM(v){ return (v/1e6).toFixed(2) + 'M'; }
+function fmtPctS(v){ return v==null ? '—' : (v>=0?'+':'') + Number(v).toFixed(2) + '%'; }
+// Compact: 4850000 → "4.85M", 120000 → "120K", -50000 → "-50K"
+function fmtCpt(v){
+  if (v==null) return '—';
+  var s = v < 0 ? '-' : '+';
+  var a = Math.abs(v);
+  if (a >= 1e6) return s + (a/1e6).toFixed(2) + 'M';
+  if (a >= 1e3) return s + Math.round(a/1e3) + 'K';
+  return s + Math.round(a);
+}
+function fmtTxn(v){
+  if (v==null) return '—';
+  var a = Math.abs(v);
+  if (a >= 1e6) return (a/1e6).toFixed(2) + 'M';
+  if (a >= 1e3) return Math.round(a/1e3) + 'K';
+  return Math.round(a);
+}
+function dmyToDayMon(d){
+  if (!d || d.length !== 10) return d || '—';
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.slice(0,2) + ' ' + (MON[parseInt(d.slice(3,5),10)-1] || '');
+}
+
+/* ── Date picker ─────────────────────────────────────────────────────────── */
+var today = window.todayLocal();
+S.dateFrom = S.dateTo = today;
+
+// Debounce: wait 750ms after the last onChange, but only run the sim
+// once the calendar is closed — prevents simulating with the wrong date
+// while the user is still picking a range (clicked "from", not yet "to").
+var _simTimer = null;
+function runSimDebounced(){
+  clearTimeout(_simTimer);
+  _simTimer = setTimeout(function(){ if (!sdp._open) runSim(); }, 100);
+}
+
+var sdp = new window.StockbitDatePicker('pfDatePicker', {
+  from: today, to: today, alignRight: true,
+  onChange: function(from, to){
+    S.dateFrom = from; S.dateTo = to || from;
+    runSimDebounced();
+  }
+});
+
+/* ── Gear / Settings Panel ───────────────────────────────────────────────── */
+(function(){
+  var panel = document.createElement('div');
+  panel.className = 'pf-gear-panel';
+  panel.style.display = 'none';
+  panel.innerHTML =
+    '<div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;display:flex;align-items:center;gap:6px">'
+    + '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">'
+    + '<circle cx="7" cy="7" r="2"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M2.9 2.9l.7.7M10.4 10.4l.7.7M11.1 2.9l-.7.7M3.6 10.4l-.7.7"/>'
+    + '</svg>Simulation Settings</div>'
+    + '<div class="pfg-section">Capital &amp; Allocation</div>'
+    + '<div class="pfg-row"><span class="pfg-label">BSJP Capital</span><input class="pfg-input" id="pfgBsjpCap" type="text" inputmode="numeric"></div>'
+    + '<div class="pfg-row"><span class="pfg-label">Per BSJP Signal</span><input class="pfg-input" id="pfgBsjpAlloc" type="text" inputmode="numeric"></div>'
+    + '<div class="pfg-row"><span class="pfg-label">Wyckoff Capital</span><input class="pfg-input" id="pfgWyckoffCap" type="text" inputmode="numeric"></div>'
+    + '<div class="pfg-row"><span class="pfg-label">Per Wyckoff Signal</span><input class="pfg-input" id="pfgWyckoffAlloc" type="text" inputmode="numeric"></div>'
+    + '<div class="pfg-section" style="margin-top:14px">Transaction Fees</div>'
+    + '<div class="pfg-row"><span class="pfg-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none">'
+    + '<input id="pfgFeesOn" type="checkbox" style="width:14px;height:14px;cursor:pointer"> Include transaction fees</label></span></div>'
+    + '<div id="pfgFeeRows">'
+    + '<div class="pfg-row"><span class="pfg-label">Buy Fee</span><input class="pfg-input" id="pfgFeeBuy" type="number" step="0.01" min="0"><span class="pfg-suffix">%</span></div>'
+    + '<div class="pfg-row"><span class="pfg-label">Sell Fee</span><input class="pfg-input" id="pfgFeeSell" type="number" step="0.01" min="0"><span class="pfg-suffix">%</span></div>'
+    + '<div class="pfg-row"><span class="pfg-label">Final Tax</span><input class="pfg-input" id="pfgFeePph" type="number" step="0.01" min="0"><span class="pfg-suffix">%</span></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">'
+    + '<button type="button" id="pfgResetBtn" style="flex:1;padding:7px 0;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-dim);font-size:12px;cursor:pointer">Reset</button>'
+    + '<button type="button" id="pfgSaveBtn" style="flex:2;padding:7px 0;border:none;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;cursor:pointer">Save &amp; Recalculate</button>'
+    + '</div>';
+  document.body.appendChild(panel);
+
+  function fmtBgt(v){ return Math.round(v).toLocaleString('id-ID'); }
+  function parseBgt(s){ return parseInt((s+'').replace(/\./g,''), 10); }
+
+  function populate(){
+    var p = S.prefs;
+    document.getElementById('pfgBsjpCap').value      = fmtBgt(p.bsjp_capital);
+    document.getElementById('pfgBsjpAlloc').value    = fmtBgt(p.bsjp_alloc);
+    document.getElementById('pfgWyckoffCap').value   = fmtBgt(p.wyckoff_basis);
+    document.getElementById('pfgWyckoffAlloc').value = fmtBgt(p.wyckoff_alloc);
+    document.getElementById('pfgFeesOn').checked     = p.fees_enabled;
+    document.getElementById('pfgFeeBuy').value       = p.fee_buy;
+    document.getElementById('pfgFeeSell').value      = p.fee_sell;
+    document.getElementById('pfgFeePph').value       = p.fee_pph;
+    document.getElementById('pfgFeeRows').style.display = p.fees_enabled ? '' : 'none';
+  }
+
+  var open = false;
+  var btn = document.getElementById('pfGearBtn');
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (open){ panel.style.display='none'; open=false; return; }
+    populate();
+    var r = btn.getBoundingClientRect(), pw = 290;
+    var left = Math.min(r.right - pw, window.innerWidth - pw - 8);
+    if (left < 8) left = 8;
+    panel.style.left = left + 'px';
+    panel.style.top  = (r.bottom + 6) + 'px';
+    panel.style.display = ''; open = true;
+  });
+
+  document.addEventListener('mousedown', function(e){
+    if (open && !panel.contains(e.target) && !btn.contains(e.target)){
+      panel.style.display='none'; open=false;
+    }
+  });
+
+  document.getElementById('pfgFeesOn').addEventListener('change', function(){
+    document.getElementById('pfgFeeRows').style.display = this.checked ? '' : 'none';
+  });
+
+  ['pfgBsjpCap','pfgBsjpAlloc','pfgWyckoffCap','pfgWyckoffAlloc'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('focus', function(){ var v=parseBgt(this.value); this.value = v>0 ? v : ''; });
+    el.addEventListener('blur',  function(){ var v=parseBgt(this.value); if(v>0) this.value=fmtBgt(v); });
+  });
+
+  // Reset → back to the server-side simulation basis (SRV_DEFAULTS / config.py).
+  // Applied and persisted immediately, so the panel can't be left showing default
+  // values while S.prefs / localStorage / the rendered cards still hold the old ones.
+  document.getElementById('pfgResetBtn').addEventListener('click', function(){
+    S.prefs = Object.assign({}, PREFS_DEF);
+    localStorage.setItem(PREFS_KEY, JSON.stringify(S.prefs));
+    populate();
+    renderAll();
+  });
+
+  document.getElementById('pfgSaveBtn').addEventListener('click', function(){
+    var flt = function(id, def){ return parseFloat(document.getElementById(id).value) || def; };
+    S.prefs = {
+      bsjp_capital:  parseBgt(document.getElementById('pfgBsjpCap').value)      || PREFS_DEF.bsjp_capital,
+      bsjp_alloc:    parseBgt(document.getElementById('pfgBsjpAlloc').value)    || PREFS_DEF.bsjp_alloc,
+      wyckoff_alloc: parseBgt(document.getElementById('pfgWyckoffAlloc').value) || PREFS_DEF.wyckoff_alloc,
+      wyckoff_basis: parseBgt(document.getElementById('pfgWyckoffCap').value)   || PREFS_DEF.wyckoff_basis,
+      fees_enabled:  document.getElementById('pfgFeesOn').checked,
+      fee_buy:  flt('pfgFeeBuy',  PREFS_DEF.fee_buy),
+      fee_sell: flt('pfgFeeSell', PREFS_DEF.fee_sell),
+      fee_pph:  flt('pfgFeePph',  PREFS_DEF.fee_pph),
+    };
+    localStorage.setItem(PREFS_KEY, JSON.stringify(S.prefs));
+    panel.style.display='none'; open=false;
+    // Pure client-side what-if: rescales the already-fetched server data (which is
+    // always simulated at the fixed SRV_DEFAULTS budget) — no network round trip,
+    // no server-side recompute.
+    renderAll();
+  });
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   EQUITY CHART — pure SVG, no external deps
+   ════════════════════════════════════════════════════════════════════════ */
+var CHART = { W:1100, H:300, PL:54, PR:16, PT:12, PB:32 };
+
+function activeDatasets(){
+  if (!S.view || !S.view.equity) return [];
+  var eq = S.view.equity;
+  var out = [];
+  PF_ALGOS.forEach(function(a){
+    if (S.active[a.id] && eq[a.id] && eq[a.id].length)
+      out.push({ id:a.id, label:a.label, color:a.color, data:eq[a.id] });
+  });
+  return out;
+}
+
+function renderChart(){
+  var inner = document.getElementById('pfChartInner');
+  var ds = activeDatasets();
+  if (!ds.length){ inner.innerHTML = ''; return; }
+
+  var eq = S.view.equity, labels = eq.labels;
+  var n = labels.length;
+
+  /* IHSG benchmark — rebased to 0% at the window start so an index around 7.000
+     can share a plot area with a P&L curve in rupiah. Own right-hand % axis;
+     never mixed into the equity min/max. Nulls = days Yahoo returned no bar. */
+  var ihsgRaw = (S.showIhsg && S.view.ihsg && S.view.ihsg.length === n) ? S.view.ihsg : null;
+  var ihsgPct = null, ihsgBase = null;
+  if (ihsgRaw){
+    for (var bi = 0; bi < n; bi++){ if (ihsgRaw[bi] > 0){ ihsgBase = ihsgRaw[bi]; break; } }
+    if (ihsgBase){
+      ihsgPct = ihsgRaw.map(function(v){ return v > 0 ? (v - ihsgBase) / ihsgBase * 100 : null; });
+      if (ihsgPct.filter(function(v){ return v != null; }).length < 2) ihsgPct = null;
+    }
+  }
+  var drawIhsg = !!ihsgPct;
+
+  var W=CHART.W, H=CHART.H, PL=CHART.PL, PT=CHART.PT, PB=CHART.PB;
+  var PR = drawIhsg ? 46 : CHART.PR;   // room for the right-hand % axis
+  var cw = W-PL-PR, ch = H-PT-PB;
+
+  // Resolve theme colors to literal hex — var() is unreliable in SVG presentation attrs.
+  var cs = getComputedStyle(document.documentElement);
+  var gridCol = (cs.getPropertyValue('--border').trim()  || '#e7e5dc');
+  var muteCol = (cs.getPropertyValue('--muted').trim()   || '#a3a097');
+  var b2Col   = (cs.getPropertyValue('--border2').trim() || '#d4d2c7');
+  var benchCol= (cs.getPropertyValue('--pf-bench').trim()|| '#9aa2ac');
+
+  var all = [];
+  ds.forEach(function(d){ all = all.concat(d.data); });
+  var minV = Math.min.apply(null, all);
+  var maxV = Math.max.apply(null, all);
+  var pad  = (maxV - minV) * 0.05 || Math.abs(maxV) * 0.05 || 1e6;
+  minV -= pad; maxV += pad;
+
+  function xPos(i){ return PL + (n<=1 ? 0 : (i/(n-1))*cw); }
+  function yPos(v){ return PT + ch - ((v-minV)/(maxV-minV))*ch; }
+
+  // Secondary scale for the benchmark, independent of the rupiah axis.
+  var iMin=0, iMax=0, yPos2 = function(){ return 0; };
+  if (drawIhsg){
+    var iVals = ihsgPct.filter(function(v){ return v != null; });
+    iMin = Math.min.apply(null, iVals);
+    iMax = Math.max.apply(null, iVals);
+    var iPad = (iMax - iMin) * 0.05 || 1;
+    iMin -= iPad; iMax += iPad;
+    yPos2 = function(v){ return PT + ch - ((v-iMin)/(iMax-iMin))*ch; };
+  }
+  // Break the dashed line into runs so gaps (nulls) aren't bridged by a fake segment.
+  function ihsgSegments(){
+    var segs = [], cur = [];
+    for (var i=0;i<n;i++){
+      if (ihsgPct[i] == null){ if (cur.length>1) segs.push(cur); cur = []; continue; }
+      cur.push(xPos(i).toFixed(1)+','+yPos2(ihsgPct[i]).toFixed(1));
+    }
+    if (cur.length>1) segs.push(cur);
+    return segs;
+  }
+
+  function polyline(data){ return data.map(function(v,i){ return xPos(i).toFixed(1)+','+yPos(v).toFixed(1); }).join(' '); }
+  function areaPath(data){
+    var pts = data.map(function(v,i){ return xPos(i).toFixed(1)+' '+yPos(v).toFixed(1); });
+    return 'M'+PL+','+(PT+ch)+' L'+pts.join(' L')+' L'+xPos(n-1).toFixed(1)+','+(PT+ch)+' Z';
+  }
+
+  var yTicks = []; for (var t=0;t<5;t++) yTicks.push(minV + (maxV-minV)*(t/4));
+  var xStep = Math.max(1, Math.ceil(n/9));
+  var xIdx = []; for (var i=0;i<n;i+=xStep) xIdx.push(Math.min(i,n-1)); if (xIdx[xIdx.length-1]!==n-1) xIdx.push(n-1);
+
+  var svg = '<svg id="pfSvg" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:100%;display:block">';
+  svg += '<defs>';
+  ds.forEach(function(d){
+    svg += '<linearGradient id="pfg-'+d.id+'" x1="0" y1="0" x2="0" y2="1">'
+        +  '<stop offset="0%" stop-color="'+d.color+'" stop-opacity="0.18"/>'
+        +  '<stop offset="100%" stop-color="'+d.color+'" stop-opacity="0"/></linearGradient>';
+  });
+  svg += '</defs>';
+  // gridlines
+  yTicks.forEach(function(v){
+    svg += '<line x1="'+PL+'" y1="'+yPos(v).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yPos(v).toFixed(1)+'" stroke="'+gridCol+'" stroke-width="1"/>';
+  });
+  // areas + lines
+  ds.forEach(function(d){ svg += '<path d="'+areaPath(d.data)+'" fill="url(#pfg-'+d.id+')"/>'; });
+  // IHSG benchmark — drawn under the equity lines so it reads as background reference
+  if (drawIhsg){
+    ihsgSegments().forEach(function(seg){
+      svg += '<polyline points="'+seg.join(' ')+'" fill="none" stroke="'+benchCol+'" stroke-width="2" '
+          +  'stroke-dasharray="5 5" opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>';
+    });
+  }
+  ds.forEach(function(d){
+    svg += '<polyline points="'+polyline(d.data)+'" fill="none" stroke="'+d.color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+  });
+  // hover dots — filled circle + pulsing ring, one per dataset
+  ds.forEach(function(d){
+    svg += '<circle id="pfDot-'+d.id+'" cx="-99" cy="-99" r="4.5" fill="'+d.color+'" stroke="#fff" stroke-width="1.5" style="display:none"/>';
+    svg += '<circle id="pfDotRing-'+d.id+'" cx="-99" cy="-99" r="5" fill="none" stroke="'+d.color+'" stroke-width="1.5" stroke-opacity="0" style="display:none;animation:pfDotPulse 1.5s ease-out infinite"/>';
+  });
+  // crosshair (hidden until hover)
+  svg += '<line id="pfCross" x1="0" y1="'+PT+'" x2="0" y2="'+(PT+ch)+'" stroke="'+b2Col+'" stroke-width="1.5" stroke-dasharray="4 3" style="display:none"/>';
+  // Y labels
+  yTicks.forEach(function(v){
+    svg += '<text x="'+(PL-6)+'" y="'+(yPos(v)+4).toFixed(1)+'" text-anchor="end" font-size="9.5" font-family="Geist Mono, monospace" fill="'+muteCol+'">'+(v/1e6).toFixed(0)+'M</text>';
+  });
+  // Right-hand IHSG % axis (benchmark scale — separate from the rupiah axis)
+  if (drawIhsg){
+    for (var it=0; it<5; it++){
+      var iv = iMin + (iMax-iMin)*(it/4);
+      svg += '<text x="'+(W-PR+6)+'" y="'+(yPos2(iv)+4).toFixed(1)+'" text-anchor="start" font-size="9.5" '
+          +  'font-family="Geist Mono, monospace" fill="'+benchCol+'" opacity="0.85">'+(iv>=0?'+':'')+iv.toFixed(1)+'%</text>';
+    }
+  }
+  // X labels
+  xIdx.forEach(function(i){
+    svg += '<text x="'+xPos(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" font-family="Geist Mono, monospace" fill="'+muteCol+'">'+labels[i]+'</text>';
+  });
+  svg += '</svg>';
+  svg += '<div id="pfTip" style="position:absolute;display:none;top:8px;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;box-shadow:0 4px 16px rgba(0,0,0,.1);pointer-events:none;min-width:140px;z-index:10"></div>';
+
+  inner.innerHTML = svg;
+
+  var svgEl = document.getElementById('pfSvg');
+  var cross = document.getElementById('pfCross');
+  var tip = document.getElementById('pfTip');
+  svgEl.addEventListener('mousemove', function(e){
+    var r = svgEl.getBoundingClientRect();
+    var mx = (e.clientX - r.left) * (W / r.width);
+    var i = Math.min(n-1, Math.max(0, Math.round((mx-PL)/cw*(n-1))));
+    var x = xPos(i);
+    cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.display = '';
+    ds.forEach(function(d){
+      var cx = x.toFixed(1), cy = yPos(d.data[i]).toFixed(1);
+      var dot  = document.getElementById('pfDot-'+d.id);
+      var ring = document.getElementById('pfDotRing-'+d.id);
+      if (dot)  { dot.setAttribute('cx', cx);  dot.setAttribute('cy', cy);  dot.style.display=''; }
+      if (ring) { ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.style.display=''; }
+    });
+    var rows = ds.map(function(d){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:2px">'
+        + '<span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:99px;background:'+d.color+'"></span>'
+        + '<span style="font-size:11.5px;color:var(--text-dim)">'+d.label+'</span></span>'
+        + '<span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--ink)">Rp '+fmtM(d.data[i])+'</span></div>';
+    }).join('');
+    if (drawIhsg && ihsgPct[i] != null){
+      rows += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;'
+        + 'margin-top:4px;padding-top:4px;border-top:1px dashed var(--border)">'
+        + '<span style="display:flex;align-items:center;gap:5px">'
+        +   '<span style="width:8px;height:0;border-top:2px dashed '+benchCol+'"></span>'
+        +   '<span style="font-size:11.5px;color:var(--text-dim)">IHSG</span></span>'
+        + '<span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text-dim)">'
+        +   Math.round(ihsgRaw[i]).toLocaleString('id-ID')
+        +   ' <span style="color:'+(ihsgPct[i]>=0?'var(--up)':'var(--down)')+'">'+fmtPctS(ihsgPct[i])+'</span>'
+        + '</span></div>';
+    }
+    tip.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:5px">'+labels[i]+'</div>'+rows;
+    tip.style.left = Math.min(x/W*100, 72) + '%';
+    tip.style.display = '';
+  });
+  svgEl.addEventListener('mouseleave', function(){
+    cross.style.display='none'; tip.style.display='none';
+    ds.forEach(function(d){
+      var dot  = document.getElementById('pfDot-'+d.id);
+      var ring = document.getElementById('pfDotRing-'+d.id);
+      if (dot)  dot.style.display='none';
+      if (ring) ring.style.display='none';
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CHIPS
+   ════════════════════════════════════════════════════════════════════════ */
+function renderChips(){
+  var el = document.getElementById('pfChips');
+  var ret = { wyckoff: null, bsjp: null };
+  if (S.view){ ret.wyckoff = S.view.wyckoff.stats.total_return_pct; ret.bsjp = S.view.bsjp.stats.total_return_pct; }
+  el.innerHTML = PF_ALGOS.map(function(a){
+    var on = S.active[a.id];
+    var style = on ? 'background:'+a.color+'18;border-color:'+a.color : '';
+    var dot = on ? 'background:'+a.color : '';
+    return '<div class="pf-chip" data-algo="'+a.id+'" style="'+style+'">'
+      + '<span class="pf-chip-dot" style="'+dot+'"></span>'
+      + '<span class="pf-chip-label" style="'+(on?'font-weight:600;color:var(--ink)':'')+'">'+a.label+'</span>'
+      + '<span class="pf-chip-ret" style="'+(on?'color:var(--up)':'')+'">'+(ret[a.id]!=null?fmtPctS(ret[a.id]):'')+'</span>'
+      + '</div>';
+  }).join('');
+  // Benchmark toggle — only offered when the server actually returned IHSG data
+  if (S.view && S.view.ihsg && S.view.ihsg.some(function(v){ return v > 0; })){
+    var on = S.showIhsg;
+    el.innerHTML += '<div class="pf-chip" id="pfIhsgChip" style="'+(on?'border-color:var(--pf-bench)':'')+'">'
+      + '<span style="width:12px;height:0;border-top:2px dashed '+(on?'var(--pf-bench)':'var(--border2)')+';opacity:.85"></span>'
+      + '<span class="pf-chip-label" style="'+(on?'font-weight:600;color:var(--text-dim)':'')+'">IHSG</span>'
+      + '</div>';
+    var chip = document.getElementById('pfIhsgChip');
+    if (chip) chip.addEventListener('click', function(){
+      S.showIhsg = !S.showIhsg; renderChips(); renderChart();
+    });
+  }
+  el.querySelectorAll('.pf-chip[data-algo]').forEach(function(c){
+    c.addEventListener('click', function(){ toggleAlgo(c.dataset.algo); });
+  });
+}
+var _firstSig = {};
+function cacheFirstSigs(){
+  // Compute once, from the first result we see — that's the full unfiltered range,
+  // so these stay the GLOBAL first signals. Recomputing off a later date-filtered
+  // response would narrow them to "first signal in the current window" and drag the
+  // picker's reset target along with every range change.
+  if (Object.keys(_firstSig).length) return;
+  PF_ALGOS.forEach(function(a){
+    var ad = S.data && S.data[a.id];
+    if (!ad || !ad.trades) return;
+    var key = a.id === 'bsjp' ? 'date' : 'entry_date', min = null;
+    ad.trades.forEach(function(t){
+      var d = t[key]; if (!d || d.length !== 10) return;
+      var cmp = d.slice(6)+d.slice(3,5)+d.slice(0,2);
+      if (!min || cmp < min.cmp) min = {cmp:cmp, dmy:d};
+    });
+    if (min) _firstSig[a.id] = window.DD_MM_YYYYtoISO(min.dmy);
+  });
+}
+function firstSignalISO(algoId){ return _firstSig[algoId] || null; }
+
+function toggleAlgo(id){
+  var next = Object.assign({}, S.active); next[id] = !next[id];
+  if (!next.wyckoff && !next.bsjp) return;
+  S.active = next;
+  renderChips();
+  if (S.data){
+    var sigs = [];
+    PF_ALGOS.forEach(function(a){ if(next[a.id]){ var s=firstSignalISO(a.id); if(s) sigs.push(s); } });
+    if (sigs.length){
+      var earliest = sigs.sort()[0];
+      if (earliest !== S.dateFrom){ S.dateFrom=earliest; sdp.setDates(earliest, S.dateTo); runSim(); return; }
+    }
+  }
+  renderChart(); renderStats();
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   STATS PANEL
+   ════════════════════════════════════════════════════════════════════════ */
+function openStatRows(trades){
+  var open = (trades||[]).filter(function(t){ return t.status==='OPEN'; });
+  if (!open.length) return [{ label:'Open Positions', val:'0', c:'ink' }];
+  var totalPnl = open.reduce(function(s,t){ return s+(t.pnl_rp||0); }, 0);
+  var wins  = open.filter(function(t){ return (t.pnl_rp||0)>0; });
+  var losses = open.filter(function(t){ return (t.pnl_rp||0)<=0; });
+  var best  = open.reduce(function(m,t){ return (t.gain||0)>(m.gain||0)?t:m; }, open[0]);
+  var worst = open.reduce(function(m,t){ return (t.gain||0)<(m.gain||0)?t:m; }, open[0]);
+  return [
+    { label:'Open Positions', val:open.length.toString(), c:'ink' },
+    { label:'Unrealized P&L', val:fmtRp(totalPnl), c: totalPnl>=0?'up':'down' },
+    { label:'Profit / Loss',  val:wins.length+' / '+losses.length, c: wins.length>losses.length?'up':'down' },
+    { label:'Best',  val:best.ticker+' '+fmtPctS(best.gain),  c:(best.gain||0)>=0?'up':'down' },
+    { label:'Worst', val:worst.ticker+' '+fmtPctS(worst.gain), c:(worst.gain||0)>=0?'up':'down' },
+  ];
+}
+
+function statRows(algoId, st, trades){
+  var holdVal = algoId === 'bsjp' ? 'T+1' : (st.avg_hold!=null ? st.avg_hold + ' days' : '—');
+  var rows = [
+    { label:'Total Return',    val:fmtPctS(st.total_return_pct), c: st.total_return_pct>=0?'up':'down' },
+    { label:'Win Rate',        val:(st.win_rate!=null?st.win_rate+'%':'—'), c: (st.win_rate!=null&&st.win_rate>=50)?'up':'down' },
+    { label:'Avg Hold',        val:holdVal, c:'ink' },
+    { label:'Total Trades',    val:(st.total_trades!=null?st.total_trades.toLocaleString('id-ID'):'—'), c:'ink' },
+    { label:'Profit Factor',   val:(st.profit_factor!=null?st.profit_factor+'×':'—'), c: (st.profit_factor!=null&&st.profit_factor>=1)?'up':'down' },
+    { label:'Total Transaction Value', val:(st.total_txn_value!=null?fmtRp(st.total_txn_value):'—'), c:'ink' },
+  ];
+  if (S.prefs.fees_enabled){
+    rows.push({ label:'Transaction Fee', val:fmtRp(st.total_fees||0), c:'down' });
+  }
+  return rows;
+}
+function colorVar(c){ return c==='up'?'var(--up)':c==='down'?'var(--down)':'var(--ink)'; }
+
+function animateStatVal(el, finalText, delay){
+  var neg = finalText.charAt(0)==='−' || finalText.charAt(0)==='-';
+  var stripped = finalText.replace(/^[+\-−]\s*/,'').replace(/^Rp\s*/,'');
+  var isPct = /%/.test(finalText), isTimes = /×/.test(finalText), isRp = /Rp/.test(finalText);
+  var sign = finalText.charAt(0)==='+' ? '+' : (neg ? '−' : '');
+  var rawStr = (isPct || isTimes)
+    ? stripped.replace(/[^0-9.]/g, '')
+    : stripped.replace(/\./g, '').replace(',', '.');
+  var num = parseFloat(rawStr);
+  el.style.fontVariantNumeric = 'tabular-nums';
+  if (isNaN(num) || num === 0){
+    el.style.cssText += ';opacity:0;transition:opacity .3s '+((delay||0)/1000)+'s';
+    requestAnimationFrame(function(){ el.style.opacity='1'; el.textContent=finalText; });
+    return;
+  }
+  var raw = num * (neg ? -1 : 1), dur = 900;
+  el.style.opacity = '0';
+  el.style.cssText += ';transition:opacity .25s';
+  var started = false;
+  function start(){
+    if (started) return;
+    started = true;
+    el.style.opacity = '1';
+    var t0 = performance.now();
+    function frame(now){
+      var p = Math.min(1,(now-t0)/dur);
+      var e = p >= 1 ? 1 : 1 - Math.pow(2, -10*p);
+      var cur = raw*e, abs = Math.abs(cur);
+      var txt;
+      if (isRp)       txt = (neg?'−':'')+'Rp '+Math.round(abs).toLocaleString('id-ID');
+      else if (isPct) txt = sign+abs.toFixed(2)+'%';
+      else if (isTimes) txt = abs.toFixed(2)+'×';
+      else txt = Math.round(abs).toLocaleString('id-ID');
+      el.textContent = txt;
+      if (p < 1) requestAnimationFrame(frame); else el.textContent = finalText;
+    }
+    requestAnimationFrame(frame);
+  }
+  setTimeout(start, delay || 0);
+  setTimeout(function(){ if (!started){ started = true; el.style.opacity='1'; el.textContent = finalText; } }, (delay||0) + dur + 400);
+}
+
+function renderStats(){
+  var wrap = document.getElementById('pfStats');
+  if (!S.view){ wrap.style.display='none'; return; }
+  var cols = PF_ALGOS.filter(function(a){ return S.active[a.id]; });
+  wrap.style.display = '';
+  wrap.innerHTML = cols.map(function(a){
+    var st = S.view[a.id].stats;
+    var trades = S.view[a.id].trades;
+    var allocM = a.id === 'bsjp' ? S.prefs.bsjp_alloc : S.prefs.wyckoff_alloc;
+    var allocFmt = allocM >= 1e6 ? (allocM/1e6).toFixed(0)+'M' : allocM.toLocaleString('id-ID');
+
+    var tabHtml = '';
+    if (a.id === 'wyckoff') {
+      tabHtml = '<div style="margin-left:auto;display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:8px;border:1px solid var(--border)">'
+        + '<button class="pf-stat-tab'+(S.wyStatTab==='closed'?' active':'')+'" data-tab="closed">Closed</button>'
+        + '<button class="pf-stat-tab'+(S.wyStatTab==='open'?' active':'')+'" data-tab="open">Open</button>'
+        + '</div>';
+    }
+
+    var isOpen = a.id === 'wyckoff' && S.wyStatTab === 'open';
+    var rowData = isOpen ? openStatRows(trades) : statRows(a.id, st, trades);
+    var rows = rowData.map(function(r){
+      return '<div class="pf-stats-row"><span class="pf-stats-label">'+r.label+'</span>'
+        + '<span class="pf-stats-val" data-val="'+r.val.replace(/"/g,'&quot;')+'" style="color:'+colorVar(r.c)+'">'+r.val+'</span></div>';
+    }).join('');
+
+    var foot = '';
+    if (!isOpen && st.available_balance != null) {
+      var avail = st.available_balance, totEq = st.total_equity;
+      var initEq = st.initial_equity || 0;
+      foot = '<div class="pf-stats-foot">'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11.5px;color:var(--muted)">Available Balance</span>'
+        +   '<span data-val="'+fmtRp(avail)+'" style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim)">'+fmtRp(avail)+'</span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:var(--text);font-weight:500">Total Equity</span>'
+        +   '<span data-val="'+fmtRp(totEq)+'" style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:'+(totEq>=initEq?'var(--up)':'var(--down)')+'">'+fmtRp(totEq)+'</span></div>'
+        + '</div>';
+    }
+
+    return '<div class="pf-stats-col">'
+      + '<div class="pf-stats-head"><span style="width:10px;height:10px;border-radius:99px;background:'+a.color+'"></span>'
+      + '<span style="font-size:14px;font-weight:600;color:var(--ink)">'+a.label+'</span>'
+      + '<span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-left:2px">· '+allocFmt+'/signal</span>'
+      + tabHtml
+      + '</div>'
+      + '<div class="pf-stats-rows">'+rows+'</div>'
+      + foot
+      + '</div>';
+  }).join('');
+
+  wrap.querySelectorAll('.pf-stat-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      S.wyStatTab = btn.dataset.tab;
+      renderStats();
+    });
+  });
+  wrap.querySelectorAll('[data-val]').forEach(function(el, i){ animateStatVal(el, el.dataset.val, i*50); });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   TRADE LOG
+   ════════════════════════════════════════════════════════════════════════ */
+function renderTradeLog(){
+  if (!S.view){ document.getElementById('pfTradeCard').style.display='none'; return; }
+  document.getElementById('pfTradeCard').style.display = '';
+  var wy = S.view.wyckoff.trades, bs = S.view.bsjp.trades;
+
+  document.getElementById('pfAllocFoot').textContent =
+    'Lot size IDX = 100 shares · Wyckoff Allocation ' + fmtRp(S.prefs.wyckoff_alloc)
+    + ' · BSJP ' + fmtRp(S.prefs.bsjp_alloc) + ' per signal';
+
+  // tabs
+  document.getElementById('pfTabs').innerHTML = [
+    {id:'wyckoff',label:'Wyckoff',count:wy.length},
+    {id:'bsjp',label:'BSJP',count:bs.length},
+  ].map(function(t){
+    return '<div class="pf-seg'+(S.tab===t.id?' active':'')+'" data-tab="'+t.id+'">'+t.label
+      + '<span class="pf-seg-count">'+t.count+'</span></div>';
+  }).join('');
+  document.getElementById('pfTabs').querySelectorAll('.pf-seg').forEach(function(s){
+    s.addEventListener('click', function(){ S.tab = s.dataset.tab; S.statusFilter='all'; S.wyPage=1; S.bsPage=1; renderTradeLog(); });
+  });
+
+  // status filter (wyckoff only)
+  var filtEl = document.getElementById('pfStatusFilter');
+  if (S.tab === 'wyckoff'){
+    filtEl.style.display = 'flex';
+    filtEl.innerHTML = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'closed',label:'Closed'}].map(function(f){
+      return '<div class="pf-filt'+(S.statusFilter===f.id?' active':'')+'" data-filt="'+f.id+'">'+f.label+'</div>';
+    }).join('');
+    filtEl.querySelectorAll('.pf-filt').forEach(function(b){
+      b.addEventListener('click', function(){ S.statusFilter=b.dataset.filt; S.wyPage=1; renderTradeLog(); });
+    });
+  } else { filtEl.style.display='none'; filtEl.innerHTML=''; }
+
+  // info text
+  var info = document.getElementById('pfTabInfo');
+  if (S.tab === 'wyckoff'){
+    var oc = S.view.wyckoff.stats.open_count, cc = S.view.wyckoff.stats.closed_count;
+    info.textContent = oc + ' open · ' + cc + ' closed';
+  } else info.textContent = 'all resolved T+1';
+
+  // view mode toggle
+  var vmBtn = document.getElementById('pfViewModeBtn');
+  vmBtn.classList.toggle('active', S.viewMode==='month');
+  document.getElementById('pfViewModeLbl').textContent = S.viewMode==='month' ? 'Flat view' : 'Group by month';
+  vmBtn.onclick = function(){ S.viewMode = S.viewMode==='month' ? 'flat' : 'month'; renderTradeLog(); };
+
+  // table
+  if (S.tab === 'wyckoff') {
+    var wyF = wy;
+    if (S.statusFilter==='open')   wyF = wyF.filter(function(x){ return x.status==='OPEN'; });
+    if (S.statusFilter==='closed') wyF = wyF.filter(function(x){ return x.status!=='OPEN'; });
+    if (S.viewMode==='month') renderGroupedByMonth(wyF, 'wyckoff', 'entry_date'); else renderWyTable(wy);
+  } else {
+    if (S.viewMode==='month') renderGroupedByMonth(bs, 'bsjp', 'date'); else renderBsTable(bs);
+  }
+}
+
+function sortRows(rows, sort){
+  return rows.slice().sort(function(a,b){
+    var av=a[sort.col], bv=b[sort.col];
+    if (typeof av === 'number' && typeof bv === 'number') return sort.asc ? av-bv : bv-av;
+    av = (av==null?'':String(av)); bv = (bv==null?'':String(bv));
+    return sort.asc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+}
+function sortIndicator(sort, col){ return sort.col===col ? (sort.asc?' ↑':' ↓') : ''; }
+
+function wyStatusBadge(s){
+  var cfg = s==='OPEN' ? {bg:'rgba(240,201,74,.14)',col:'#b8922a'}
+    : s==='WIN' ? {bg:'var(--up-soft)',col:'var(--up)'}
+    : {bg:'var(--down-soft)',col:'var(--down)'};
+  return '<span class="pf-badge" style="background:'+cfg.bg+';color:'+cfg.col+'">'+s+'</span>';
+}
+
+function paginationHtml(curPage, total, ps, algo){
+  var tp = Math.ceil(total / ps);
+  if (tp <= 1) return '';
+  var pages = [1];
+  for (var i = Math.max(2, curPage-1); i <= Math.min(tp-1, curPage+1); i++) pages.push(i);
+  if (pages[pages.length-1] !== tp) pages.push(tp);
+  function btn(p, label, active){
+    return '<button class="pfpg-btn" data-page="'+p+'" data-algo="'+algo+'" style="'
+      + 'min-width:30px;height:30px;padding:0 7px;border-radius:8px;cursor:pointer;'
+      + 'border:1px solid '+(active?'var(--accent)':'var(--border)')+';'
+      + 'background:'+(active?'var(--accent)':'var(--surface2)')+';'
+      + 'color:'+(active?'#fff':'var(--text-dim)')+';'
+      + 'font-family:var(--font-mono);font-size:12px;font-weight:'+(active?'700':'400')+'">'+label+'</button>';
+  }
+  var html = '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 18px;border-top:1px solid var(--border)">';
+  for (var i = 0; i < pages.length; i++){
+    if (i > 0 && pages[i]-pages[i-1] > 1) html += '<span style="color:var(--muted);font-size:12px;padding:0 2px">…</span>';
+    html += btn(pages[i], pages[i], pages[i]===curPage);
+  }
+  if (curPage < tp) html += btn(curPage+1, '»', false);
+  return html + '</div>';
+}
+
+function bindPagination(wrap){
+  wrap.querySelectorAll('.pfpg-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pg = parseInt(btn.dataset.page, 10);
+      if (btn.dataset.algo==='wyckoff') S.wyPage=pg; else S.bsPage=pg;
+      renderTradeLog();
+    });
+  });
+}
+
+/* ── Grouped-by-month view ────────────────────────────────────────────── */
+var MON_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function ymd(d){ var p=d.split('-'); return p[2]+p[1]+p[0]; }
+function monthOf(d){ var p=d.split('-'); return { key:p[2]+'-'+p[1], label:MON_FULL[parseInt(p[1],10)-1]+' '+p[2] }; }
+
+function groupByMonth(rows, dateField){
+  var months = {};
+  rows.forEach(function(t){
+    var d = t[dateField];
+    if (!d) return;
+    var mi = monthOf(d);
+    if (!months[mi.key]) months[mi.key] = { key:mi.key, label:mi.label, rows:[], dates:{} };
+    months[mi.key].rows.push(t);
+    if (!months[mi.key].dates[d]) months[mi.key].dates[d] = { key:d, label:dmyToDayMon(d), rows:[] };
+    months[mi.key].dates[d].rows.push(t);
+  });
+  var out = Object.keys(months).map(function(k){ return months[k]; });
+  out.sort(function(a,b){ return b.key.localeCompare(a.key); });
+  out.forEach(function(m){
+    m.dateList = Object.keys(m.dates).map(function(k){ return m.dates[k]; });
+    m.dateList.sort(function(a,b){ return ymd(b.key).localeCompare(ymd(a.key)); });
+  });
+  return out;
+}
+function sumPnl(rows){ return rows.reduce(function(s,t){ return s+(t.pnl_rp||0); }, 0); }
+function winRatePct(rows){
+  // Win rate over CLOSED trades only — an OPEN Wyckoff position hasn't won or
+  // lost yet, so including it would water down the ratio.
+  var closed = rows.filter(function(t){ return t.status !== 'OPEN'; });
+  if (!closed.length) return null;
+  var wins = closed.filter(function(t){ return (t.gain||0) > 0; }).length;
+  return Math.round(wins/closed.length*1000)/10;
+}
+
+function wyRowHtml(t){
+  var muted = t.status==='OPEN';
+  var pnlCol = (t.pnl_rp||0) >= 0 ? 'var(--up)' : 'var(--down)';
+  return '<tr class="pf-row">'
+    + '<td class="pf-td" style="font-size:13px;font-weight:700;color:var(--ink)">'+t.ticker+'</td>'
+    + '<td class="pf-td" style="font-size:11.5px;color:var(--text-dim)">'+dmyToDayMon(t.entry_date)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.entry_price).toLocaleString('id-ID')+'</td>'
+    + '<td class="pf-td" style="font-size:11.5px;color:'+(muted?'var(--muted)':'var(--text-dim)')+'">'+dmyToDayMon(t.exit_date)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:'+(muted?'var(--muted)':'var(--text)')+'">'+Math.round(t.exit_price).toLocaleString('id-ID')+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:13px;font-weight:700;color:'+(t.gain>=0?'var(--up)':'var(--down)')+'">'+fmtPctS(t.gain)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+fmtTxn(t.txn_value)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12px;font-weight:600;color:'+pnlCol+'">'+fmtCpt(t.pnl_rp)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+t.hold_days+'d</td>'
+    + '<td class="pf-td" style="text-align:center">'+wyStatusBadge(t.status)+'</td>'
+    + '</tr>';
+}
+function bsRowHtml(t){
+  var nm = setupName(t.setup), col = setupCol(t.setup);
+  var pnlCol = (t.pnl_rp||0) >= 0 ? 'var(--up)' : 'var(--down)';
+  return '<tr class="pf-row">'
+    + '<td class="pf-td" style="font-size:13px;font-weight:700;color:var(--ink)">'+t.ticker+'</td>'
+    + '<td class="pf-td" style="font-size:11.5px;color:var(--text-dim)">'+dmyToDayMon(t.date)+'</td>'
+    + '<td class="pf-td"><span class="pf-setup-badge" style="background:'+col+'1a"><span style="width:6px;height:6px;border-radius:99px;background:'+col+';flex-shrink:0"></span>'
+    +   '<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:'+col+'">'+nm+'</span></span></td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.entry_price).toLocaleString('id-ID')+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.exit_price).toLocaleString('id-ID')+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:13px;font-weight:700;color:'+(t.gain>=0?'var(--up)':'var(--down)')+'">'+fmtPctS(t.gain)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+fmtTxn(t.txn_value)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12px;font-weight:600;color:'+pnlCol+'">'+fmtCpt(t.pnl_rp)+'</td>'
+    + '<td class="pf-td" style="text-align:right;font-size:12px;color:var(--text-dim)">'+t.lots+'</td>'
+    + '</tr>';
+}
+function wyMiniTable(rows){
+  return '<table class="pf-table"><colgroup>'
+    + '<col style="width:76px"/><col style="width:80px"/><col style="width:88px"/><col style="width:80px"/>'
+    + '<col style="width:88px"/><col style="width:80px"/><col style="width:74px"/><col style="width:80px"/>'
+    + '<col style="width:58px"/><col style="width:70px"/></colgroup>'
+    + '<thead><tr><th class="pf-th left">Ticker</th><th class="pf-th left">Entry</th><th class="pf-th">Price</th>'
+    + '<th class="pf-th left">Exit</th><th class="pf-th">Price</th><th class="pf-th">Gain%</th><th class="pf-th">Value</th>'
+    + '<th class="pf-th">P&L Rp</th><th class="pf-th">Hold</th><th class="pf-th center">Status</th></tr></thead>'
+    + '<tbody>'+rows.map(wyRowHtml).join('')+'</tbody></table>';
+}
+function bsMiniTable(rows){
+  return '<table class="pf-table"><colgroup>'
+    + '<col style="width:76px"/><col style="width:72px"/><col style="width:170px"/>'
+    + '<col style="width:88px"/><col style="width:88px"/><col style="width:78px"/>'
+    + '<col style="width:70px"/><col style="width:78px"/><col style="width:52px"/></colgroup>'
+    + '<thead><tr><th class="pf-th left">Ticker</th><th class="pf-th left">Date</th><th class="pf-th left">Setup</th>'
+    + '<th class="pf-th">Entry</th><th class="pf-th">Exit</th><th class="pf-th">PnL%</th><th class="pf-th">Value</th>'
+    + '<th class="pf-th">P&L Rp</th><th class="pf-th">Lot</th></tr></thead>'
+    + '<tbody>'+rows.map(bsRowHtml).join('')+'</tbody></table>';
+}
+
+function renderGroupedByMonth(rows, tab, dateField){
+  var months = groupByMonth(rows, dateField);
+  var wrap = document.getElementById('pfTableWrap');
+  if (!months.length){
+    wrap.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No trades.</div>';
+    return;
+  }
+  wrap.innerHTML = months.map(function(m){
+    var mKey = tab+':'+m.key;
+    var mOpen = !!S.expMonths[mKey];
+    var mPnl = sumPnl(m.rows);
+    var datesHtml = '';
+    if (mOpen){
+      datesHtml = m.dateList.map(function(dd){
+        var dKey = tab+':'+dd.key;
+        var dOpen = !!S.expDates[dKey];
+        var dPnl = sumPnl(dd.rows);
+        var body = dOpen ? ('<div class="pf-date-body" style="overflow-x:auto">'+(tab==='wyckoff'?wyMiniTable(dd.rows):bsMiniTable(dd.rows))+'</div>') : '';
+        return '<div>'
+          + '<div class="pf-date-row" data-datekey="'+dKey+'">'
+          +   '<div class="pf-grp-chevron'+(dOpen?' open':'')+'"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 1.5L7 5L3 8.5"/></svg></div>'
+          +   '<div class="pf-grp-label">'+dd.label+'</div>'
+          +   '<div class="pf-grp-count">'+dd.rows.length+' trades</div>'
+          +   '<div class="pf-grp-pnl" style="color:'+(dPnl>=0?'var(--up)':'var(--down)')+'">'+fmtCpt(dPnl)+'</div>'
+          + '</div>'
+          + body
+        + '</div>';
+      }).join('');
+    }
+    var mWr = winRatePct(m.rows);
+    return '<div>'
+      + '<div class="pf-month-row" data-monthkey="'+mKey+'">'
+      +   '<div class="pf-grp-chevron'+(mOpen?' open':'')+'"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 1.5L7 5L3 8.5"/></svg></div>'
+      +   '<div class="pf-grp-label">'+m.label+'</div>'
+      +   (mWr!=null ? '<div class="pf-grp-count" style="color:'+(mWr>=50?'var(--up)':'var(--down)')+'">'+mWr+'% WR</div>' : '')
+      +   '<div class="pf-grp-count">'+m.rows.length+' trades</div>'
+      +   '<div class="pf-grp-pnl" style="color:'+(mPnl>=0?'var(--up)':'var(--down)')+'">'+fmtCpt(mPnl)+'</div>'
+      + '</div>'
+      + datesHtml
+    + '</div>';
+  }).join('');
+  wrap.querySelectorAll('.pf-month-row').forEach(function(row){
+    row.addEventListener('click', function(){
+      var k = row.dataset.monthkey;
+      S.expMonths[k] = !S.expMonths[k];
+      renderTradeLog();
+    });
+  });
+  wrap.querySelectorAll('.pf-date-row').forEach(function(row){
+    row.addEventListener('click', function(){
+      var k = row.dataset.datekey;
+      S.expDates[k] = !S.expDates[k];
+      renderTradeLog();
+    });
+  });
+}
+
+function renderWyTable(rows){
+  var r = rows;
+  if (S.statusFilter==='open')   r = r.filter(function(x){ return x.status==='OPEN'; });
+  if (S.statusFilter==='closed') r = r.filter(function(x){ return x.status!=='OPEN'; });
+  r = sortRows(r, S.wySort);
+  var total = r.length;
+  var page  = Math.min(S.wyPage, Math.max(1, Math.ceil(total/PAGE_SIZE)));
+  S.wyPage  = page;
+  var paged = r.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+  var cols = [
+    {col:'ticker',label:'Ticker',cls:'left'}, {col:'entry_date',label:'Entry',cls:'left'},
+    {col:'entry_price',label:'Price'}, {col:'exit_date',label:'Exit',cls:'left'},
+    {col:'exit_price',label:'Price'}, {col:'gain',label:'Gain%'},
+    {col:'txn_value',label:'Value'}, {col:'pnl_rp',label:'P&L Rp'},
+    {col:'hold_days',label:'Hold'}, {col:'status',label:'Status',cls:'center'},
+  ];
+  var head = cols.map(function(c){
+    return '<th class="pf-th '+(c.cls||'')+(S.wySort.col===c.col?' active-sort':'')+'" data-col="'+c.col+'">'+c.label+sortIndicator(S.wySort,c.col)+'</th>';
+  }).join('');
+  var body = paged.map(function(t){
+    var muted = t.status==='OPEN';
+    var pnlCol = (t.pnl_rp||0) >= 0 ? 'var(--up)' : 'var(--down)';
+    return '<tr class="pf-row">'
+      + '<td class="pf-td" style="font-size:13px;font-weight:700;color:var(--ink)">'+t.ticker+'</td>'
+      + '<td class="pf-td" style="font-size:11.5px;color:var(--text-dim)">'+dmyToDayMon(t.entry_date)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.entry_price).toLocaleString('id-ID')+'</td>'
+      + '<td class="pf-td" style="font-size:11.5px;color:'+(muted?'var(--muted)':'var(--text-dim)')+'">'+dmyToDayMon(t.exit_date)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:'+(muted?'var(--muted)':'var(--text)')+'">'+Math.round(t.exit_price).toLocaleString('id-ID')+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:13px;font-weight:700;color:'+(t.gain>=0?'var(--up)':'var(--down)')+'">'+fmtPctS(t.gain)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+fmtTxn(t.txn_value)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12px;font-weight:600;color:'+pnlCol+'">'+fmtCpt(t.pnl_rp)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+t.hold_days+'d</td>'
+      + '<td class="pf-td" style="text-align:center">'+wyStatusBadge(t.status)+'</td>'
+      + '</tr>';
+  }).join('');
+  if (!body) body = '<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No trades.</td></tr>';
+
+  var wrap = document.getElementById('pfTableWrap');
+  wrap.innerHTML =
+    '<table class="pf-table"><colgroup>'
+    + '<col style="width:76px"/><col style="width:80px"/><col style="width:88px"/><col style="width:80px"/>'
+    + '<col style="width:88px"/><col style="width:80px"/><col style="width:74px"/><col style="width:80px"/>'
+    + '<col style="width:58px"/><col style="width:70px"/>'
+    + '</colgroup><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
+    + paginationHtml(page, total, PAGE_SIZE, 'wyckoff');
+  wrap.querySelectorAll('.pf-th').forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.dataset.col;
+      if (S.wySort.col===col) S.wySort.asc=!S.wySort.asc; else { S.wySort.col=col; S.wySort.asc=false; S.wyPage=1; }
+      renderTradeLog();
+    });
+  });
+  bindPagination(wrap);
+}
+
+function renderBsTable(rows){
+  var r = sortRows(rows, S.bsSort);
+  var total = r.length;
+  var page  = Math.min(S.bsPage, Math.max(1, Math.ceil(total/PAGE_SIZE)));
+  S.bsPage  = page;
+  var paged = r.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+  var cols = [
+    {col:'ticker',label:'Ticker',cls:'left'}, {col:'date',label:'Date',cls:'left'},
+    {col:'setup',label:'Setup',cls:'left'}, {col:'entry_price',label:'Entry'},
+    {col:'exit_price',label:'Exit'}, {col:'gain',label:'PnL%'},
+    {col:'txn_value',label:'Value'}, {col:'pnl_rp',label:'P&L Rp'},
+    {col:'lots',label:'Lot'},
+  ];
+  var head = cols.map(function(c){
+    return '<th class="pf-th '+(c.cls||'')+(S.bsSort.col===c.col?' active-sort':'')+'" data-col="'+c.col+'">'+c.label+sortIndicator(S.bsSort,c.col)+'</th>';
+  }).join('');
+  var body = paged.map(function(t){
+    var nm = setupName(t.setup), col = setupCol(t.setup);
+    var pnlCol = (t.pnl_rp||0) >= 0 ? 'var(--up)' : 'var(--down)';
+    return '<tr class="pf-row">'
+      + '<td class="pf-td" style="font-size:13px;font-weight:700;color:var(--ink)">'+t.ticker+'</td>'
+      + '<td class="pf-td" style="font-size:11.5px;color:var(--text-dim)">'+dmyToDayMon(t.date)+'</td>'
+      + '<td class="pf-td"><span class="pf-setup-badge" style="background:'+col+'1a"><span style="width:6px;height:6px;border-radius:99px;background:'+col+';flex-shrink:0"></span>'
+      +   '<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:'+col+'">'+nm+'</span></span></td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.entry_price).toLocaleString('id-ID')+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12.5px;color:var(--text)">'+Math.round(t.exit_price).toLocaleString('id-ID')+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:13px;font-weight:700;color:'+(t.gain>=0?'var(--up)':'var(--down)')+'">'+fmtPctS(t.gain)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:11.5px;color:var(--text-dim)">'+fmtTxn(t.txn_value)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12px;font-weight:600;color:'+pnlCol+'">'+fmtCpt(t.pnl_rp)+'</td>'
+      + '<td class="pf-td" style="text-align:right;font-size:12px;color:var(--text-dim)">'+t.lots+'</td>'
+      + '</tr>';
+  }).join('');
+  if (!body) body = '<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No trades.</td></tr>';
+
+  var wrap = document.getElementById('pfTableWrap');
+  wrap.innerHTML =
+    '<table class="pf-table"><colgroup>'
+    + '<col style="width:76px"/><col style="width:72px"/><col style="width:170px"/>'
+    + '<col style="width:88px"/><col style="width:88px"/><col style="width:78px"/>'
+    + '<col style="width:70px"/><col style="width:78px"/><col style="width:52px"/>'
+    + '</colgroup><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
+    + paginationHtml(page, total, PAGE_SIZE, 'bsjp');
+  wrap.querySelectorAll('.pf-th').forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.dataset.col;
+      if (S.bsSort.col===col) S.bsSort.asc=!S.bsSort.asc; else { S.bsSort.col=col; S.bsSort.asc=false; S.bsPage=1; }
+      renderTradeLog();
+    });
+  });
+  bindPagination(wrap);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   RENDER ALL + DATA FLOW
+   ════════════════════════════════════════════════════════════════════════ */
+function renderAll(){
+  if (!S.data) return;   // gear panel can call this before the first fetch resolves
+  S.view = viewData();
+  document.getElementById('pfStatus').style.display = 'none';
+  document.getElementById('pfComputed').textContent = S.data.computed_at ? 'Computed: ' + S.data.computed_at : '';
+  renderChips(); renderChart(); renderStats(); renderTradeLog();
+}
+
+function setStatus(html){
+  var el = document.getElementById('pfStatus');
+  el.style.display = ''; el.innerHTML = html;
+}
+
+var pollTimer = null;
+function runSim(){
+  if (S.loading) return;
+  S.loading = true;
+  if (!S.data) setStatus('<span class="pf-spinner"></span> &nbsp;Calculating portfolio simulation…');
+  var from = window.isoToDD_MM_YYYY(S.dateFrom), to = window.isoToDD_MM_YYYY(S.dateTo);
+  // Only the date range is ever sent — capital/alloc are fixed server-side (config.py)
+  // and never travel over the wire. "What-if my own budget" is applied client-side
+  // in viewData(), on top of whatever the server returns here.
+  var url = '/api/portfolio?run=1&date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.equity) {
+        // Cache hit: server filtered in-memory, no polling needed
+        S.loading = false;
+        S.data = d;
+        cacheFirstSigs();   // no-op once populated; fallback for the cold-boot path
+        syncPickerToRange(d); renderAll();
+      } else {
+        // No cached full-history sim yet (cold boot only — settings changes never
+        // land here anymore). Once the background sim finishes, re-issue THIS same
+        // date-filtered request instead of grabbing the raw unfiltered result.
+        poll(function(){ S.loading = false; runSim(); });
+      }
+    })
+    .catch(function(){ S.loading=false; if(S.data) renderAll(); setStatus('<span style="color:var(--down)">⚠ Failed to run simulation.</span>'); });
+}
+
+function poll(onDone){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(function(){
+    fetch('/api/portfolio?status=1').then(function(r){ return r.json(); }).then(function(d){
+      if (d.status !== 'running'){ clearInterval(pollTimer); (onDone || fetchResult)(); }
+    }).catch(function(){ clearInterval(pollTimer); S.loading=false; setStatus('<span style="color:var(--down)">⚠ Failed.</span>'); });
+  }, 1300);
+}
+
+function fetchResult(){
+  fetch('/api/portfolio').then(function(r){ return r.json(); }).then(function(d){
+    S.loading = false;
+    if (d && d.equity){ S.data = d; cacheFirstSigs(); syncPickerToRange(d); renderAll(); }
+    else if (d && d.status === 'running'){ poll(); }
+    else setStatus('<span style="color:var(--down)">⚠ No data.</span>');
+  }).catch(function(){ S.loading=false; setStatus('<span style="color:var(--down)">⚠ Failed to load results.</span>'); });
+}
+
+var pickerSynced = false;
+function syncPickerToRange(d){
+  if (!d.date_range || d.date_range === '-') return;
+  var parts = d.date_range.split(' - ');
+  if (parts.length !== 2) return;
+  var f = window.DD_MM_YYYYtoISO(parts[0]);
+  var t = window.DD_MM_YYYYtoISO(parts[1]);
+  if (!pickerSynced){
+    var sigs = [];
+    PF_ALGOS.forEach(function(a){ if(S.active[a.id]){ var s=firstSignalISO(a.id); if(s) sigs.push(s); } });
+    // Fall back to the raw axis start only when no signal exists at all.
+    var start = sigs.length ? sigs.sort()[0] : f;
+    // Reset target = first signal, NOT the raw axis start. _axis_dates() unions
+    // price_history, which carries the 200-day MA200 backfill, so the axis begins
+    // long before any signal — resetting to `f` would drop the user on a stretch
+    // of empty pre-signal history they never picked.
+    sdp.setDefault(start, t);
+    S.dateFrom = start; S.dateTo = t;
+    sdp.setDates(start, t);
+    pickerSynced = true;
+  }
+}
+
+/* ── Initial load: read cache or wait for auto-triggered run ──────────────── */
+fetch('/api/portfolio').then(function(r){ return r.json(); }).then(function(d){
+  if (d && d.equity){
+    S.data=d; cacheFirstSigs(); syncPickerToRange(d);
+    runSim(); // filter to first-signal start; renderAll in callback — no full-range flicker
+  }
+  else if (d && d.status === 'running'){ S.loading=true; poll(); }
+  else setStatus('<span style="color:var(--down)">⚠ No eod_summary data.</span>');
+}).catch(function(){ setStatus('<span style="color:var(--down)">⚠ Failed to load.</span>'); });
+
+})();
+</script>
+</body>
+</html>

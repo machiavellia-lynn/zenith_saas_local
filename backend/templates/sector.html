@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<script>(function(){var t=localStorage.getItem('zenith-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenith — Sector Rotation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/sidebar.css">
+<link rel="stylesheet" href="/static/components.css">
+<style>
+html, body { height: 100%; }
+body.sidebar-layout { overflow: hidden; }
+.sector-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.sector-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 18px 18px 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, background .15s;
+}
+.sector-card:hover { border-color: var(--border2); }
+.sector-card.active-up   { background: var(--up-soft); border-color: var(--up); }
+.sector-card.active-down { background: var(--down-soft); border-color: var(--down); }
+.sector-name { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+.sector-gain {
+  font-family: var(--font-mono); font-size: 20px; font-weight: 700; line-height: 1;
+}
+.sector-divider { height: 1px; background: var(--border); }
+.sector-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sector-meta-item .s-lbl { font-size: 10.5px; color: var(--muted); }
+.sector-meta-item .s-val { font-family: var(--font-mono); font-size: 13px; font-weight: 600; margin-top: 2px; }
+/* Mini sparkline canvas */
+.sparkline { display: block; width: 100%; height: 32px; }
+/* Bidir bar chart */
+.bidir-row { display: grid; grid-template-columns: 170px 1fr 90px; gap: 12px; align-items: center; }
+.bidir-bar-outer { position: relative; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.bidir-center { position: absolute; left: 50%; top: 0; width: 1.5px; height: 100%; background: var(--border2); z-index: 2; }
+.bidir-fill { position: absolute; height: 100%; border-radius: 99px; }
+/* Expanded movers */
+.movers-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--surface2); border-radius: 8px; }
+</style>
+</head>
+<body class="sidebar-layout">
+{% include 'sidebar.html' %}
+
+<div class="main-content">
+  <div class="page-header">
+    <div>
+      <div class="page-subtitle">Rotation map · Industry accumulation</div>
+      <h1 class="page-title">Sector Rotation</h1>
+    </div>
+    <div class="page-header-actions">
+      <div id="sectorDatePicker"></div>
+      <div class="ihsg-pill">
+        <span class="ihsg-pill-label">IHSG</span>
+        <span class="ihsg-pill-price" id="ihsgPrice">—</span>
+        <span class="ihsg-pill-gain" id="ihsgGain">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <!-- Stat cards -->
+    <div class="stat-cards-4">
+      <div class="stat-card emph">
+        <div class="stat-card-label">Net CM</div>
+        <div class="stat-card-value" id="statNetCM">—</div>
+        <div class="stat-card-sub">SM − BM aggregate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Net MF</div>
+        <div class="stat-card-value" id="statNetMF">—</div>
+        <div class="stat-card-sub">MF+ − MF− aggregate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Top Sector</div>
+        <div class="stat-card-value ink" id="statTopSec" style="font-size:15px">—</div>
+        <div class="stat-card-sub" id="statTopCM">— CM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Weakest Sector</div>
+        <div class="stat-card-value down" id="statBotSec" style="font-size:15px">—</div>
+        <div class="stat-card-sub" id="statBotCM">— CM</div>
+      </div>
+    </div>
+
+    <!-- Sector cards grid -->
+    <div class="sector-grid" id="sectorGrid">
+      <div style="grid-column:1/-1;padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Loading...</div>
+    </div>
+
+    <!-- Bidir chart -->
+    <div class="section-card" style="margin-top:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:600;color:var(--ink)">Clean Money by Sector</div>
+        <div style="font-size:12px;color:var(--muted)" id="bidirLabel">— · Bidirectional from center</div>
+      </div>
+      <div id="bidirChart" style="display:flex;flex-direction:column;gap:11px">
+        <div style="color:var(--muted);font-size:13px">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/zenith-utils.js"></script>
+<script>
+(function(){
+var S = { dateFrom: '', dateTo: '', sectors: [], active: null, liveDate: '' };
+var today = window.todayLocal();
+S.dateFrom = S.dateTo = S.liveDate = today;
+
+window.loadIHSGBadge(document.getElementById('ihsgPrice'), document.getElementById('ihsgGain'));
+
+var sdp = new window.StockbitDatePicker('sectorDatePicker', {
+  from: today, to: today, alignRight: true,
+  onChange: function(from, to) { S.dateFrom = from; S.dateTo = to || from; load(); }
+});
+fetch('/api/last-date').then(function(r){return r.json();}).then(function(d){if(d.date){var iso=window.DD_MM_YYYYtoISO(d.date.replace(/\//g,'-'));S.dateFrom=iso;S.dateTo=iso;S.liveDate=iso;sdp.setDates(iso,iso);load();}}).catch(function(){});
+
+/* Mini sparkline using SVG polyline */
+function sparklineSVG(data, w, h, isUp) {
+  if (!data || data.length < 2) return '<svg width="'+w+'" height="'+h+'"></svg>';
+  var mn = Math.min.apply(null, data), mx = Math.max.apply(null, data);
+  var rng = mx - mn || 1;
+  var pts = data.map(function(v, i) {
+    var x = i / (data.length - 1) * w;
+    var y = h - ((v - mn) / rng) * (h - 2) - 1;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  var col = isUp ? '#3a6b58' : '#c8633a';
+  return '<svg width="'+w+'" height="'+h+'" style="display:block;width:100%"><polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+function renderSectors() {
+  var sectors = S.sectors;
+  if (!sectors.length) {
+    document.getElementById('sectorGrid').innerHTML = '<div style="grid-column:1/-1;padding:48px 0;text-align:center;color:var(--muted);font-size:13px">No data.</div>';
+    return;
+  }
+
+  /* Summary cards */
+  var allCM   = sectors.map(function(s){return s.cm||0;});
+  var allMF   = sectors.map(function(s){return s.net_mf||0;});
+  var netCM   = allCM.reduce(function(a,b){return a+b;},0);
+  var netMF   = allMF.reduce(function(a,b){return a+b;},0);
+  var topIdx  = allCM.indexOf(Math.max.apply(null,allCM));
+  var botIdx  = allCM.indexOf(Math.min.apply(null,allCM));
+  var ncmEl   = document.getElementById('statNetCM');
+  ncmEl.textContent  = (netCM>=0?'+':'')+window.fmtMoney(netCM);
+  ncmEl.className    = 'stat-card-value '+(netCM>=0?'up':'down');
+  var nmfEl   = document.getElementById('statNetMF');
+  nmfEl.textContent  = (netMF>=0?'+':'')+window.fmtMoney(netMF);
+  nmfEl.className    = 'stat-card-value '+(netMF>=0?'up':'down');
+  document.getElementById('statTopSec').textContent = sectors[topIdx] ? sectors[topIdx].name : '—';
+  document.getElementById('statTopCM').textContent  = sectors[topIdx] ? '+'+window.fmtMoney(sectors[topIdx].cm)+' CM' : '—';
+  document.getElementById('statBotSec').textContent = sectors[botIdx] ? sectors[botIdx].name : '—';
+  document.getElementById('statBotCM').textContent  = sectors[botIdx] ? window.fmtMoney(sectors[botIdx].cm)+' CM' : '—';
+
+  /* Sector cards */
+  document.getElementById('sectorGrid').innerHTML = sectors.map(function(sec, idx) {
+    var isUp    = (sec.cm || 0) >= 0;
+    var gain    = sec.gain_pct != null ? sec.gain_pct : 0;
+    var gainStr = (gain >= 0 ? '+' : '') + gain.toFixed(2) + '%';
+    var gainCol = isUp ? 'var(--up)' : 'var(--down)';
+    var isActive = S.active === sec.name;
+    var activeClass = isActive ? (isUp ? ' active-up' : ' active-down') : '';
+    /* Fake sparkline from cm value */
+    var spData = Array.from({length:20}, function(_,i){ return Math.max(0, (sec.cm||0) + (((idx*7+i*3)%19)-9)*12 + i*1.8); });
+    return '<div class="sector-card'+activeClass+'" data-name="'+sec.name+'" onclick="toggleSector(\''+sec.name+'\')">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div class="sector-name">'+sec.name+'</div>' +
+        '<div class="sector-gain" style="color:'+gainCol+'">'+gainStr+'</div>' +
+      '</div>' +
+      sparklineSVG(spData, 160, 32, isUp) +
+      '<div class="sector-divider"></div>' +
+      '<div class="sector-meta">' +
+        '<div class="sector-meta-item"><div class="s-lbl">CM</div><div class="s-val" style="color:'+gainCol+'">'+(isUp?'+':'')+window.fmtMoney(sec.cm||0)+'</div></div>' +
+        '<div class="sector-meta-item"><div class="s-lbl">Leaders</div><div class="s-val" style="font-size:11px;color:var(--text-dim);font-weight:400">'+(sec.leaders||[]).slice(0,3).join(' · ')+'</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  renderBidir();
+}
+
+function renderBidir() {
+  var sectors = S.sectors;
+  if (!sectors.length) return;
+  var sorted  = sectors.slice().sort(function(a,b){ return (b.cm||0)-(a.cm||0); });
+  var maxAbs  = sorted.reduce(function(m,s){ return Math.max(m, Math.abs(s.cm||0)); }, 1);
+  var dmy     = window.isoToDD_MM_YYYY(S.dateFrom);
+  document.getElementById('bidirLabel').textContent = dmy + ' · Bidirectional from center';
+  document.getElementById('bidirChart').innerHTML = sorted.map(function(sec) {
+    var isUp  = (sec.cm||0) >= 0;
+    var pct   = maxAbs > 0 ? Math.abs(sec.cm||0) / maxAbs * 50 : 0;
+    var col   = isUp ? '#3a6b58' : '#c8633a';
+    var left  = isUp ? '50%' : (50-pct)+'%';
+    var brad  = isUp ? '0 99px 99px 0' : '99px 0 0 99px';
+    return '<div class="bidir-row">' +
+      '<div style="font-size:12.5px;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sec.name+'</div>' +
+      '<div class="bidir-bar-outer"><div class="bidir-center"></div>' +
+        '<div class="bidir-fill" style="width:'+pct+'%;left:'+left+';background:'+col+';border-radius:'+brad+'"></div>' +
+      '</div>' +
+      '<div style="font-family:var(--font-mono);font-size:12.5px;color:'+col+';text-align:right;font-weight:600">'+(isUp?'+':'')+window.fmtMoney(sec.cm||0)+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+window.toggleSector = function(name) {
+  S.active = S.active === name ? null : name;
+  renderSectors();
+};
+
+function load(silent) {
+  if (!silent) document.getElementById('sectorGrid').innerHTML = '<div style="grid-column:1/-1;padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Loading...</div>';
+  var from = window.isoToDD_MM_YYYY(S.dateFrom), to = window.isoToDD_MM_YYYY(S.dateTo);
+  fetch('/api/sector?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      S.sectors = d.sectors || [];
+      renderSectors();
+    })
+    .catch(function() {
+      if (!silent) document.getElementById('sectorGrid').innerHTML = '<div style="grid-column:1/-1;padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Failed to load data.</div>';
+    });
+}
+
+load();
+setInterval(function(){ if (S.dateFrom === S.liveDate) load(true); }, 30000);
+})();
+</script>
+</body>
+</html>

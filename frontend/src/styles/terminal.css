@@ -1,0 +1,2843 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ZENITH TERMINAL — LAYOUT & COMPONENT STYLES
+
+   Every colour, size and gap in this file comes from a custom property
+   defined in tokens.css. There are no raw hex literals here, and there must
+   never be one: src/styles/__tests__/noHex.test.ts fails the build if one
+   appears.
+
+   Density (US-013) is consumed, not declared — rows use var(--row-h) and
+   cells use var(--cell-py) / var(--cell-px), so [data-density="comfortable"]
+   in tokens.css retunes the whole surface without a single override here.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Document reset ──────────────────────────────────────────────────── */
+/* The browser's default `body { margin: 8px }` left an 8px gap on every
+   side, through which the white page background showed as a border. The
+   terminal owns the whole viewport, so both html and body are reset and
+   painted with the app background. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  overscroll-behavior: none;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ── Reset (scoped to the terminal's own subtree) ────────────────────── */
+.app,
+.topbar,
+.app-body,
+.table-area,
+.side-panel,
+.stat-strip,
+.ticker-table,
+.tape-table,
+.panel-header,
+.panel-section,
+.kv-grid {
+  box-sizing: border-box;
+}
+
+.app *,
+.app *::before,
+.app *::after {
+  box-sizing: border-box;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  /* dvh avoids the mobile URL-bar overflow that 100vh causes. */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  line-height: 1.3;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: var(--gap-sm) var(--cell-px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-title {
+  font-size: var(--fs-md);
+  letter-spacing: 0.08em;
+  font-weight: var(--fw-bold);
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.topbar-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gap);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.topbar-date {
+  color: var(--text-dim);
+}
+
+/* Segmented control: the toggle's own .btn children sit flush. */
+.density-toggle {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.density-toggle .btn {
+  border-radius: 0;
+}
+
+.density-toggle .btn + .btn {
+  border-left: 0;
+}
+
+.density-toggle .btn:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.density-toggle .btn:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.density-toggle .btn:only-child {
+  border-radius: var(--radius-sm);
+}
+
+.btn-active {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.app-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.table-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* The table is styled whether it is a direct child of .table-area or wrapped
+   in a focusable role="grid" element, and when focus lands inside it. */
+.table-area .ticker-table,
+[role="grid"] .ticker-table {
+  border-top: 0;
+}
+
+[role="grid"]:focus-visible,
+.table-area:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.side-panel {
+  flex: 0 0 auto;
+  width: 380px;
+  max-width: 380px;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+/* ── Stat strip (US-008) ─────────────────────────────────────────────── */
+
+.stat-strip {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--gap);
+  padding: var(--gap-sm) var(--cell-px);
+  overflow-x: auto;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  gap: 1px;
+  min-width: 96px;
+  padding: var(--gap-sm) var(--gap);
+  border-left: 1px solid var(--border);
+}
+
+.stat-card:first-child {
+  border-left: 0;
+}
+
+.stat-card-label {
+  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.stat-card-value {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+}
+
+.stat-card-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ── Ticker table (US-009) ───────────────────────────────────────────── */
+
+.ticker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ticker-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--cell-py) var(--cell-px);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Ticker, phase and action read left-to-right, not as figures. */
+.ticker-table thead th:first-child,
+.ticker-table thead th.col-ticker,
+.ticker-table thead th.col-phase,
+.ticker-table thead th.col-action,
+.ticker-table thead th.col-text {
+  text-align: left;
+}
+
+.ticker-table thead th:hover {
+  color: var(--text);
+}
+
+.ticker-table th.sorted {
+  color: var(--accent-text);
+}
+
+.ticker-table th .sort-ind {
+  display: inline-block;
+  margin-left: var(--gap-sm);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.ticker-table th.sorted .sort-ind {
+  color: var(--accent-text);
+}
+
+.ticker-table tbody tr {
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+}
+
+.ticker-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.ticker-table tbody tr.selected {
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.ticker-table tbody tr:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.ticker-table td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticker-table td.col-ticker {
+  text-align: left;
+  font-weight: var(--fw-medium);
+  color: var(--accent-text);
+}
+
+.ticker-table td.col-text,
+.ticker-table td.col-phase,
+.ticker-table td.col-action {
+  text-align: left;
+}
+
+/* ── Value colours ───────────────────────────────────────────────────── */
+
+.val-up {
+  color: var(--up);
+}
+
+.val-down {
+  color: var(--down);
+}
+
+.val-flat {
+  color: var(--flat);
+}
+
+.val-null {
+  color: var(--text-faint);
+}
+
+/* ── Phase chips (US-007) ────────────────────────────────────────────── */
+
+.phase {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.02em;
+}
+
+.phase-up {
+  color: var(--phase-sos);
+  background: var(--up-dim);
+}
+
+.phase-down {
+  color: var(--phase-distri);
+  background: var(--down-dim);
+}
+
+.phase-neutral {
+  color: var(--phase-neutral);
+  background: var(--flat-dim);
+}
+
+/* "No analytics" must not read as NEUTRAL: it is un-tinted and outlined. */
+.phase-none {
+  color: var(--phase-none);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+/* ── Detail panel (US-011) ───────────────────────────────────────────── */
+
+.panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: var(--panel-pad);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-ticker {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--accent-text);
+}
+
+.panel-close {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 1px var(--gap);
+  cursor: pointer;
+}
+
+.panel-close:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface3);
+}
+
+.panel-section {
+  padding: var(--panel-pad);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-section-title {
+  margin: 0 0 var(--gap-sm);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
+}
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-sm);
+}
+
+.kv-key {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.kv-val {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  text-align: right;
+}
+
+.narrative {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ── Tape (US-012) ───────────────────────────────────────────────────── */
+
+/* Channel tags. The component renders the channel label as the element's own
+   text ("SM" / "BM"), so the tag must NOT inject a ::before prefix — it would
+   duplicate the label. The channels are separated by box shape instead:
+   SM is a filled chip with a heavy solid left edge, BM is an unfilled dashed
+   chip. Shape survives greyscale and colour-blindness; colour alone does not. */
+.tape-tag {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.tape-tag-sm {
+  color: var(--up);
+  background: var(--up-dim);
+  border-left: 3px solid currentColor;
+}
+
+.tape-tag-bm {
+  color: var(--down);
+  background: transparent;
+  border-style: dashed;
+}
+
+.tape {
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: var(--fs-sm);
+}
+
+.tape-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.tape-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 2px var(--gap-sm);
+  background: var(--surface2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.tape-table th:first-child,
+.tape-table td:first-child {
+  text-align: left;
+}
+
+.tape-table td {
+  padding: 1px var(--gap-sm);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* SM and BM differ by shape and a text prefix, not by colour alone. */
+.tape-label-sm,
+.tape-label-bm {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-sm);
+  padding: 0 3px;
+}
+
+.tape-label-sm {
+  color: var(--up);
+  border: 1px solid var(--up);
+  border-style: solid;
+  background: var(--up-dim);
+}
+
+.tape-label-sm::before {
+  content: "S ";
+}
+
+.tape-label-bm {
+  color: var(--down);
+  border: 1px solid var(--down);
+  border-style: dashed;
+  background: transparent;
+}
+
+.tape-label-bm::before {
+  content: "B ";
+}
+
+/* ── States (US-015) ─────────────────────────────────────────────────── */
+
+.state-block {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* No width/height here: callers pass inline dimensions. Background, radius
+   and the pulse animation only. */
+.skeleton {
+  display: block;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.btn {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: var(--gap-sm) var(--gap);
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.btn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+/* ── Focus (US-014) ──────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface3) var(--border2);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border2);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg);
+}
+
+/* ── Narrow window (PRD goal 4) ──────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .side-panel {
+    width: 100%;
+    max-width: 100%;
+    max-height: 45vh;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-strip {
+    flex-wrap: wrap;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHELL — topbar, nav, page container
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.topbar-page {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  margin-left: var(--gap);
+}
+
+.nav-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.nav-item-active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.nav-code {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.nav-item-active .nav-code {
+  color: var(--accent);
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The flow page keeps the class the existing table/panel rules expect. */
+.flow-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.login-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 22px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.login-mark {
+  color: var(--accent);
+  font-size: var(--fs-lg);
+}
+
+.login-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: .08em;
+  color: var(--text);
+}
+
+.login-sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--gap);
+}
+
+.login-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  margin-top: var(--gap-sm);
+}
+
+.login-input {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  padding: 6px 8px;
+}
+
+.login-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: var(--accent);
+}
+
+.login-error {
+  color: var(--down);
+  font-size: var(--fs-sm);
+  margin-top: var(--gap-sm);
+}
+
+.login-submit {
+  margin-top: var(--gap);
+  padding: 7px;
+}
+
+.login-note {
+  margin-top: var(--gap);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  line-height: 1.45;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HUB
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.hub-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--panel-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.hub-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.hub-kicker {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: .09em;
+}
+
+.hub-ihsg {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+.hub-ihsg-val {
+  font-size: 30px;
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+
+.hub-ihsg-chg {
+  font-size: var(--fs-lg);
+}
+
+.hub-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.hub-status {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 0 5px;
+  letter-spacing: .05em;
+}
+
+.hub-status-open {
+  color: var(--up);
+  border-color: var(--up);
+}
+
+.hub-status-closed {
+  color: var(--text-muted);
+}
+
+.hub-status-pre_open {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.hub-totals {
+  display: flex;
+  gap: 22px;
+}
+
+.hub-total-val {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: var(--gap);
+}
+
+.hub-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.hub-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hub-card-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-dim);
+  margin: 0;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.hub-table th {
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: 5px var(--cell-px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hub-table th:first-child {
+  text-align: left;
+}
+
+.hub-table td {
+  text-align: right;
+  padding: 4px var(--cell-px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hub-table td:first-child {
+  text-align: left;
+}
+
+.hub-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.hub-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  padding: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADMIN
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.admin-page {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.admin-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  padding: var(--panel-pad);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-stat {
+  min-width: 110px;
+}
+
+.admin-small {
+  font-size: var(--fs-sm);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table th {
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: 6px var(--cell-px);
+  border-bottom: 1px solid var(--border2);
+  background: var(--surface2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.admin-table td {
+  text-align: right;
+  padding: 5px var(--cell-px);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.admin-job-name {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+
+.admin-job-desc {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.job-status {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  letter-spacing: .03em;
+  border: 1px solid var(--border2);
+}
+
+.job-ok {
+  color: var(--up);
+  border-color: var(--up);
+  background: var(--up-dim);
+}
+
+.job-failed {
+  color: var(--down);
+  border-color: var(--down);
+  background: var(--down-dim);
+}
+
+.job-running {
+  color: var(--accent-text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.job-idle {
+  color: var(--text-muted);
+}
+
+.admin-note {
+  padding: var(--panel-pad);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CHART PRIMITIVES (shared by chart + portfolio pages)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.candle-chart,
+.equity-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface);
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-baseline {
+  stroke: var(--text-faint);
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  fill: var(--text-muted);
+  font-size: 9px;
+  font-family: var(--font-mono);
+}
+
+.candle-wick-up,
+.candle-wick-down {
+  stroke-width: 1;
+}
+
+.candle-wick-up {
+  stroke: var(--up);
+}
+
+.candle-wick-down {
+  stroke: var(--down);
+}
+
+.candle-body-up {
+  fill: var(--up);
+}
+
+.candle-body-down {
+  fill: var(--down);
+}
+
+.candle-vol-up {
+  fill: var(--up-dim);
+}
+
+.candle-vol-down {
+  fill: var(--down-dim);
+}
+
+.equity-area-up {
+  fill: var(--up-dim);
+}
+
+.equity-area-down {
+  fill: var(--down-dim);
+}
+
+.equity-line-up {
+  stroke: var(--up);
+  stroke-width: 1.5;
+}
+
+.equity-line-down {
+  stroke: var(--down);
+  stroke-width: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CHART PAGE (F3)
+
+   Appended below the shared surface; nothing above this line was changed.
+   The chart's SVG primitives, gridlines, axis text and candle classes are
+   already painted in the CHART PRIMITIVES block above, so this section only
+   adds the page chrome around them.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.chart-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--panel-pad) var(--cell-px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chart-controls {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap);
+}
+
+.chart-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.chart-search-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chart-search-input {
+  width: 96px;
+  padding: 3px var(--cell-px);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--accent-text);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chart-search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.chart-search-input:hover {
+  border-color: var(--border-strong);
+}
+
+.chart-search-input:focus-visible {
+  border-color: var(--accent);
+}
+
+.chart-search-go {
+  letter-spacing: 0.06em;
+}
+
+/* One button today, shaped as the segmented control the other timeframes
+   will need so the geometry does not change when they arrive. */
+.chart-tf {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.chart-tf .btn {
+  border-radius: 0;
+  min-width: 40px;
+}
+
+.chart-tf .btn + .btn {
+  border-left: 0;
+}
+
+.chart-tf .btn:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.chart-tf .btn:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.chart-tf .btn:only-child {
+  border-radius: var(--radius-sm);
+}
+
+/* Reads as one quote line: a hairline rule spanning the whole row rather
+   than a box per metric, so the figures sit on a shared baseline. */
+.chart-header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gap) var(--panel-pad);
+  padding: var(--gap-sm) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.chart-header-item {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--gap-sm);
+}
+
+.chart-header-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chart-header-value {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+}
+
+.chart-header-ticker {
+  color: var(--accent-text);
+  letter-spacing: 0.08em;
+}
+
+.chart-header-dim {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-normal);
+  color: var(--text-dim);
+}
+
+.chart-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-plot {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap-sm);
+}
+
+/* The shared rule gives chart SVGs `height: auto`, which collapses under
+   preserveAspectRatio="none" (jsdom reports every getBBox as 0). The page
+   therefore sizes its own chart explicitly. */
+.chart-plot .candle-chart {
+  height: 360px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTOR PAGE (F4)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.sector-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Same sticky-header, hover and sorted idioms as .ticker-table, minus the
+   selection box: a sector's affordance is its own accent caret and the
+   inline member row it opens. */
+.sector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.sector-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--cell-py) var(--cell-px);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sector-table thead th:first-child {
+  text-align: left;
+}
+
+.sector-table thead th:hover {
+  color: var(--text);
+}
+
+.sector-table th.sorted {
+  color: var(--accent-text);
+}
+
+.sector-table th .sort-ind {
+  display: inline-block;
+  margin-left: var(--gap-sm);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.sector-table th.sorted .sort-ind {
+  color: var(--accent-text);
+}
+
+.sector-table tbody tr {
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+}
+
+.sector-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.sector-table tbody tr:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.sector-table td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sector-table td.col-sector {
+  text-align: left;
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* The caret trails the name rather than leading it, so the sector column
+   still reads as a left-aligned list of names. */
+.sector-caret {
+  display: inline-block;
+  width: 1em;
+  margin-left: var(--gap-sm);
+  color: var(--text-muted);
+}
+
+/* The name is its own box so the disclosure caret never glues itself to the
+   sector name in a copy, a text selection, or a name query. */
+.sector-name {
+  white-space: nowrap;
+}
+
+/* Expanded row: the accent hairline the selected ticker row already uses. */
+.sector-row-open {
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.sector-row-open > td.col-sector {
+  color: var(--accent-text);
+}
+
+.sector-row-open > td.col-sector .sector-caret {
+  color: var(--accent-text);
+}
+
+.sector-members-row {
+  height: auto;
+}
+
+.sector-members-row > td {
+  padding: var(--gap) var(--cell-px) var(--panel-pad);
+  background: var(--surface);
+  text-align: left;
+  white-space: normal;
+}
+
+.sector-members-title {
+  margin-bottom: var(--gap-sm);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sector-members-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.sector-member-chip {
+  padding: 1px var(--gap-sm);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+}
+
+/* ── SM vs BM split bar ──────────────────────────────────────────────── */
+
+/* The bar sits on its own thin row beneath each sector rather than inside a
+   numeric cell: a value cell must stay a single right-aligned figure, and a
+   48px bar inside it would stretch the column and knock the digits off the
+   shared right edge. The separate row keeps the numbers aligned and gives
+   the bar a full-width rail to read against.
+   Two segments on a red-tracked rail: SM is a filled green bar, BM the dim
+   remainder, so the proportion reads as a length difference and survives
+   greyscale as well as colour-blindness. */
+.sector-bar-row > td {
+  padding: 0 var(--cell-px) 3px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.sector-bar-row:hover {
+  background: transparent;
+}
+
+.sector-bar-row-open {
+  background: transparent;
+}
+
+.sm-bm-bar {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--down-dim);
+  overflow: hidden;
+}
+
+.sm-bm-bar-sm {
+  display: block;
+  height: 100%;
+  background: var(--up);
+}
+
+/* Removed from consumption: the bar is a single fill on a dim remainder now,
+   but the class stays defined so an older caller cannot render an unstyled
+   segment. */
+.sm-bm-bar-bm {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .chart-plot .candle-chart {
+    height: 260px;
+  }
+
+  .chart-search-input {
+    width: 76px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CHART PAGE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.chart-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  padding: var(--panel-pad);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.chart-ticker-form {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+
+.chart-ticker-input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--accent-text);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: .06em;
+  padding: 4px 8px;
+  width: 110px;
+  text-transform: uppercase;
+}
+
+.chart-ticker-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: var(--accent);
+}
+
+.chart-tf-group {
+  display: flex;
+  gap: 2px;
+}
+
+.chart-quote {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  margin-left: auto;
+}
+
+.chart-last {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}
+
+.chart-body {
+  flex: 1;
+  padding: var(--panel-pad);
+  min-height: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTOR PAGE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.sector-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.sector-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: var(--cell-py) var(--cell-px);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sector-table thead th:first-child {
+  text-align: left;
+}
+
+.sector-table thead th.sorted {
+  color: var(--accent-text);
+}
+
+.sector-table tbody tr {
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.sector-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.sector-table tbody tr.sector-row-selected {
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.sector-table td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sector-table td:first-child {
+  text-align: left;
+  font-weight: var(--fw-medium);
+  color: var(--accent-text);
+}
+
+/* SM vs BM proportion bar */
+.sm-bm-bar {
+  display: flex;
+  height: 8px;
+  width: 84px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface3);
+}
+
+.sm-bm-bar-sm {
+  background: var(--up);
+}
+
+.sm-bm-bar-bm {
+  background: var(--down);
+}
+
+.sector-members {
+  padding: 6px var(--cell-px) 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  background: var(--surface);
+}
+
+.sector-member {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BSJP PAGE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bsjp-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.bsjp-filters {
+  display: flex;
+  gap: var(--gap-sm);
+  padding: var(--panel-pad);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.bsjp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.bsjp-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: var(--cell-py) var(--cell-px);
+  white-space: nowrap;
+}
+
+.bsjp-table thead th.bsjp-left {
+  text-align: left;
+}
+
+.bsjp-table tbody tr {
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+}
+
+.bsjp-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.bsjp-table td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bsjp-table td.bsjp-left {
+  text-align: left;
+}
+
+.bsjp-setup {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTFOLIO PAGE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.portfolio-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.portfolio-body {
+  padding: var(--panel-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.portfolio-trades {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-trades thead th {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: var(--cell-py) var(--cell-px);
+  white-space: nowrap;
+}
+
+.portfolio-trades thead th.pf-left {
+  text-align: left;
+}
+
+.portfolio-trades tbody tr {
+  height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+}
+
+.portfolio-trades tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.portfolio-trades td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.portfolio-trades td.pf-left {
+  text-align: left;
+}
+
+.pf-status {
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  font-size: var(--fs-xs);
+  border: 1px solid var(--border2);
+}
+
+.pf-open {
+  color: var(--accent-text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.pf-closed {
+  color: var(--text-muted);
+}
+
+.win-loss-bar {
+  display: flex;
+  height: 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface3);
+}
+
+.win-loss-wins {
+  background: var(--up);
+}
+
+.win-loss-losses {
+  background: var(--down);
+}
+
+.win-loss-legend {
+  display: flex;
+  gap: var(--gap);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-top: var(--gap-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BSJP PAGE (F5) — appended by the page's own stylesheet section
+
+   Only what the page adds on top of the shared surface: the scroll frame, the
+   scan strip, the sticky-header scanner table and the setup chip. Nothing above
+   this line was touched, and the filter row reuses the existing .bsjp-filters /
+   .btn / .btn-active idiom rather than redeclaring it.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bsjp-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The stat strip and the filter row are fixed chrome; the table scrolls. */
+.bsjp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bsjp-table {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.bsjp-table tbody td.col-ticker {
+  color: var(--accent-text);
+  font-weight: var(--fw-medium);
+}
+
+/* The setup chip reads as a tag, not a figure: it must never inherit the
+   right-alignment the numeric cells in the same row use. */
+.bsjp-table td.bsjp-left .bsjp-setup {
+  display: inline-block;
+}
+
+/* Reward/risk is the column the eye lands on after SCORE, so it gets the same
+   weight as the scored value without borrowing its colour. */
+.bsjp-table thead th.sorted {
+  color: var(--accent-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTFOLIO PAGE (F6)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.portfolio-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.portfolio-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-top: var(--gap);
+}
+
+.portfolio-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.portfolio-section-sub {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-faint);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Same reason as .chart-plot .candle-chart: the shared rule sets
+   `height: auto`, which collapses an SVG drawn with preserveAspectRatio="none"
+   (jsdom reports every getBBox as 0). The frame sizes the curve explicitly. */
+.portfolio-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap-sm);
+}
+
+.portfolio-chart .equity-chart {
+  height: 260px;
+}
+
+.portfolio-trades {
+  font-feature-settings: "tnum" 1;
+}
+
+.portfolio-trades thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.portfolio-trades td.col-ticker {
+  color: var(--accent-text);
+  font-weight: var(--fw-medium);
+}
+
+/* ── Open vs closed ─────────────────────────────────────────────────── */
+
+/* An open trade is not a different colour of trade: it is an unfinished one,
+   so its chip is outlined in the accent the terminal already uses for "live"
+   (the active density toggle, the sorted header) rather than a new hue. */
+.portfolio-trades td .pf-status {
+  display: inline-block;
+  letter-spacing: 0.04em;
+}
+
+.portfolio-trades td .pf-open {
+  font-weight: var(--fw-medium);
+}
+
+/* ── Win-rate bar ────────────────────────────────────────────────────── */
+
+/* The bar is one rail split by length, with a hairline at the seam: the split
+   therefore still reads when the two colours resolve to the same grey, and the
+   counts beside it carry the same information as text. */
+.win-loss {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.win-loss-caption {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.win-loss-rate {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.win-loss-counts {
+  margin-left: auto;
+  color: var(--text-dim);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.win-loss-bar {
+  width: 100%;
+}
+
+.win-loss-wins,
+.win-loss-losses {
+  display: block;
+  height: 100%;
+}
+
+.win-loss-boundary {
+  display: block;
+  flex: 0 0 auto;
+  width: 1px;
+  height: 100%;
+  background: var(--bg);
+}
+
+.win-loss-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.win-loss-key {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Legend swatches repeat the segment colours as shape, so the legend still
+   maps to the bar when the bar itself is indistinguishable. */
+.win-loss-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border2);
+}
+
+.win-loss-swatch-wins {
+  background: var(--up);
+}
+
+.win-loss-swatch-losses {
+  background: var(--down);
+}
+
+.win-loss-figure {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NARROW WINDOW — page-level retunes only
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .portfolio-chart .equity-chart {
+    height: 200px;
+  }
+
+  .win-loss-caption {
+    flex-wrap: wrap;
+  }
+
+  .win-loss-counts {
+    margin-left: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PANEL SECTION HEAD + STRUCTURE SETTINGS (gear)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.panel-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-sm);
+  min-height: 18px;
+}
+
+.panel-section-head .panel-section-title {
+  margin-bottom: 0;
+}
+
+.panel-gear-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.panel-gear {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-md);
+  line-height: 1;
+  padding: 1px 4px;
+}
+
+.panel-gear:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.panel-gear[aria-expanded="true"] {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.panel-gear-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  width: 230px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+  padding: 8px;
+}
+
+.panel-gear-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  margin-bottom: var(--gap-sm);
+}
+
+.panel-gear-count {
+  color: var(--accent-text);
+}
+
+.panel-gear-search {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 3px 6px;
+  margin-bottom: var(--gap-sm);
+}
+
+.panel-gear-search:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.panel-gear-list {
+  max-height: 210px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.panel-gear-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.panel-gear-item:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.panel-gear-item.on {
+  color: var(--accent-text);
+}
+
+.panel-gear-item input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+.panel-gear-label {
+  font-family: var(--font-mono);
+  letter-spacing: .02em;
+}
+
+.panel-gear-empty {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  padding: 6px 4px;
+}
+
+.panel-gear-foot {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  margin-top: var(--gap-sm);
+  padding-top: var(--gap-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTOR — inline SM/BM bar and expanded member table (revision)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* The SM cell holds the figure and its proportion bar on one line. The cell is
+   right-aligned like every other numeric column, so the bar sits to the LEFT of
+   the number and the digits keep their shared right edge. */
+.col-sm-cell {
+  white-space: nowrap;
+}
+
+.cell-with-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.cell-bar-value {
+  min-width: 52px;
+  text-align: right;
+}
+
+/* Two segments: green is the SM share, red is the BM remainder, so a 30/70
+   sector reads as a visibly minority green band. */
+.sm-bm-bar {
+  display: inline-flex;
+  height: 7px;
+  width: 56px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface3);
+}
+
+.sm-bm-bar-sm {
+  background: var(--up);
+}
+
+.sm-bm-bar-bm {
+  background: var(--down);
+}
+
+/* Expanded member table: flow-shaped, minus phase and action. */
+.sector-member-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--gap-sm);
+}
+
+.sector-member-table thead th {
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: 2px var(--cell-px);
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+
+.sector-member-table thead th.col-left,
+.sector-member-table td.col-left {
+  text-align: left;
+}
+
+.sector-member-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.sector-member-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.sector-member-table td {
+  padding: 2px var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTFOLIO — side-by-side strategy comparison (revision 3a)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.strat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--gap);
+}
+
+.strat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.strat-tile-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-dim);
+}
+
+.strat-tile-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.strat-tab {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: .07em;
+  padding: 2px 8px;
+}
+
+.strat-tab:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.strat-tab-active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.strat-blurb {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.strat-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.strat-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.strat-metric-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: .05em;
+}
+
+.strat-metric-val {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.strat-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DATE RANGE PICKER
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dp {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 1px;
+}
+
+.dp-step {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 0 6px;
+}
+
+.dp-step:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.dp-step:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.dp-step:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.dp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 3px 9px;
+}
+
+.dp-trigger:hover {
+  background: var(--surface3);
+}
+
+.dp-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.dp-trigger-icon {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.dp-trigger-text {
+  min-width: 96px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dp-pop {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 40;
+  width: 264px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+  padding: 8px;
+}
+
+.dp-presets {
+  display: flex;
+  gap: 3px;
+  margin-bottom: var(--gap-sm);
+}
+
+.dp-preset {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  padding: 2px 0;
+}
+
+.dp-preset:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.dp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gap-sm);
+}
+
+.dp-month {
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.dp-nav {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-md);
+  padding: 0 6px;
+}
+
+.dp-nav:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.dp-hint {
+  font-size: var(--fs-xs);
+  color: var(--accent-text);
+  margin-bottom: var(--gap-sm);
+  min-height: 14px;
+}
+
+.dp-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dp-grid th {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding-bottom: 3px;
+}
+
+.dp-grid td {
+  padding: 0;
+  text-align: center;
+}
+
+.dp-day {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 3px 0;
+}
+
+.dp-day:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.dp-in-range {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.dp-edge {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: var(--fw-bold);
+}
+
+.dp-pending {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.dp-pad {
+  background: transparent;
+}
+
+/* The date control sits in a page header row. */
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  padding: 7px var(--panel-pad);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-toolbar-spacer {
+  flex: 1;
+}
+
+.page-toolbar-note {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MULTI-LINE COMPARISON CHART
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mlc-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.mlc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  list-style: none;
+  margin: 0 0 var(--gap-sm);
+  padding: 0;
+}
+
+.mlc-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+}
+
+.mlc-swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.mlc-legend-label {
+  letter-spacing: .05em;
+  font-weight: var(--fw-medium);
+}
+
+.mlc-legend-value {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.mlc-tone-up {
+  color: var(--up);
+}
+
+.mlc-tone-down {
+  color: var(--down);
+}
+
+.mlc-tone-accent {
+  color: var(--accent-text);
+}
+
+.mlc-tone-info {
+  color: var(--info);
+}
+
+.mlc-line {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.mlc-end-dot {
+  fill: currentColor;
+}
+
+.multi-line-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface);
+}
+
+.mlc-note {
+  margin: var(--gap-sm) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* Strategy comparison table, under the merged equity chart. */
+.strat-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--gap);
+}
+
+.strat-compare thead th {
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  padding: 4px var(--cell-px);
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+
+.strat-compare thead th.sc-left,
+.strat-compare td.sc-left {
+  text-align: left;
+}
+
+.strat-compare tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.strat-compare tbody tr.sc-active {
+  background: var(--accent-dim);
+}
+
+.strat-compare td {
+  padding: var(--cell-py) var(--cell-px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sc-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--fw-medium);
+  letter-spacing: .04em;
+}
+
+.sc-swatch {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.sc-tone-up {
+  color: var(--up);
+}
+
+.sc-tone-down {
+  color: var(--down);
+}
+
+.sc-tone-accent {
+  color: var(--accent-text);
+}
+
+.sc-tone-info {
+  color: var(--info);
+}
+
+.sc-blurb {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}

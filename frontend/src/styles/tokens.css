@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ZENITH TERMINAL — DESIGN TOKENS
+   Dark, dense, monospace. Bloomberg-terminal direction.
+   No raw hex outside this file.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface tiers (near-black base, stepping up in luminance) ───── */
+  --bg:          #0a0a0a;
+  --surface:     #101010;
+  --surface2:    #161616;
+  --surface3:    #1c1c1c;
+  --surface-hover: #1f1f1f;
+
+  /* ── Borders ─────────────────────────────────────────────────────── */
+  --border:      #262626;
+  --border2:     #333333;
+  --border-strong: #4a4a4a;
+
+  /* ── Text tiers ──────────────────────────────────────────────────── */
+  --text:        #e6e6e6;
+  --text-dim:    #a0a0a0;
+  --text-muted:  #6b6b6b;
+  --text-faint:  #4d4d4d;
+
+  /* ── Directional ─────────────────────────────────────────────────── */
+  --up:          #26a65b;
+  --up-dim:      rgba(38, 166, 91, 0.14);
+  --down:        #d94f45;
+  --down-dim:    rgba(217, 79, 69, 0.14);
+  --flat:        #8a8a8a;
+  --flat-dim:    rgba(138, 138, 138, 0.12);
+
+  /* ── Accent (terminal amber — used sparingly, for focus/selection) ─ */
+  --accent:      #d9a441;
+  --accent-dim:  rgba(217, 164, 65, 0.16);
+  --accent-text: #f0c674;
+
+  /* ── Status ──────────────────────────────────────────────────────── */
+  --warn:        #d9a441;
+  --danger:      #d94f45;
+  --info:        #5a9fd4;
+
+  /* ── Phase colours (7 closed values + null) ──────────────────────── */
+  --phase-sos:        #34d17a;
+  --phase-spring:     #26a65b;
+  --phase-absorb:     #4fb3a5;
+  --phase-accum:      #6fbf73;
+  --phase-upthrust:   #e08a3c;
+  --phase-distri:     #d94f45;
+  --phase-neutral:    #8a8a8a;
+  --phase-none:       #4d4d4d;
+
+  /* ── Typography ──────────────────────────────────────────────────── */
+  /* Ordered so a real monospace face is always reached. The generic
+     `monospace` keyword must come last, and Win-10-era staples (Consolas,
+     Courier New) are included before it so a proportional fallback is
+     never chosen. Verified in-browser: "1111" and "8888" render at the
+     same width with this stack. */
+  --font-mono: "Cascadia Mono", "Consolas", "SF Mono", "JetBrains Mono",
+               "DejaVu Sans Mono", "Liberation Mono", "Courier New",
+               ui-monospace, monospace;
+  --font-sans: var(--font-mono);
+
+  --fs-xs:   10px;
+  --fs-sm:   11px;
+  --fs-base: 12px;
+  --fs-md:   13px;
+  --fs-lg:   15px;
+  --fs-xl:   18px;
+  --fs-2xl:  22px;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold:   600;
+
+  /* ── Density scale ───────────────────────────────────────────────── */
+  --row-h:       22px;
+  --cell-px:     8px;
+  --cell-py:     2px;
+  --panel-pad:   10px;
+  --gap:         8px;
+  --gap-sm:      4px;
+
+  /* ── Radii (terminal = nearly square) ───────────────────────────── */
+  --radius-sm: 2px;
+  --radius:    3px;
+  --radius-md: 4px;
+
+  /* ── Focus ring ──────────────────────────────────────────────────── */
+  --focus-ring: 0 0 0 1px var(--bg), 0 0 0 2px var(--accent);
+
+  /* ── Elevation (popovers) ────────────────────────────────────────── */
+  --shadow-ink: rgba(0, 0, 0, .5);
+  --shadow-pop: 0 6px 18px var(--shadow-ink);
+}
+
+/* ── Comfortable density (opt-in via [data-density]) ───────────────── */
+[data-density="comfortable"] {
+  --row-h:    30px;
+  --cell-py:  5px;
+  --cell-px:  10px;
+  --fs-base:  13px;
+  --fs-sm:    12px;
+}

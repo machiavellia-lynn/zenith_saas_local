@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<script>(function(){var t=localStorage.getItem('zenith-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenith — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/sidebar.css">
+<link rel="stylesheet" href="/static/components.css">
+<style>
+html, body { height: 100%; }
+body.sidebar-layout { overflow: hidden; }
+/* Admin-specific */
+.a-section {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.a-section-head {
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  background: var(--surface2); border-radius: 12px 12px 0 0;
+}
+.a-section-title {
+  font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim);
+}
+.a-section-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.a-section-body { padding: 16px 18px; }
+.status-badge {
+  display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border-radius: 99px; font-size: 11.5px;
+}
+.status-badge.alive { background: var(--up-soft); border: 1px solid rgba(58,107,88,.2); }
+.status-badge.idle  { background: var(--surface2); border: 1px solid var(--border); }
+.status-dot { width: 6px; height: 6px; border-radius: 99px; flex-shrink: 0; }
+.status-dot.alive { background: var(--up); animation: pulseDot 2s ease infinite; }
+.status-dot.idle  { background: var(--muted); }
+.status-text { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+.status-badge.alive .status-text { color: var(--up); }
+.status-badge.idle  .status-text { color: var(--muted); }
+@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.4} }
+/* Coverage table */
+.cov-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.cov-th { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: .04em; text-transform: uppercase; text-align: right; }
+.cov-th:first-child { text-align: left; }
+.cov-td { padding: 10px 14px; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); text-align: right; }
+.cov-td:first-child { text-align: left; }
+.cov-tr + .cov-tr td { border-top: 1px solid var(--border); }
+/* Admin buttons */
+.a-btn {
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: var(--font-sans); white-space: nowrap;
+  letter-spacing: .02em; border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.a-btn:hover { background: var(--surface2); }
+.a-btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.a-btn.primary:hover { opacity: .85; }
+.a-btn.danger { background: var(--down); color: #fff; border-color: var(--down); }
+.a-btn.danger:hover { opacity: .85; }
+.a-btn.small { padding: 5px 12px; font-size: 11.5px; }
+.a-btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Form inputs */
+.a-input {
+  padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; font-family: var(--font-sans); color: var(--ink);
+  outline: none; transition: border-color .15s; width: 100%;
+}
+.a-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.a-select {
+  padding: 7px 10px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; font-family: var(--font-sans); color: var(--ink);
+  outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+}
+/* Progress bar */
+.a-progress { height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.a-progress-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 0; transition: width .3s; }
+.a-progress-fill.anim { animation: aProgress 2s ease-in-out forwards; }
+@keyframes aProgress { from{width:0} to{width:90%} }
+/* Toast */
+.a-toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  animation: toastIn .2s ease; pointer-events: none;
+}
+@keyframes toastIn { from{transform:translateY(8px);opacity:0} to{transform:translateY(0);opacity:1} }
+.a-toast.success { background: var(--up-soft); border: 1px solid rgba(58,107,88,.3); color: var(--up); }
+.a-toast.error   { background: var(--down-soft); border: 1px solid rgba(200,99,58,.3); color: var(--down); }
+/* User avatar */
+.user-av { width: 26px; height: 26px; border-radius: 99px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+@keyframes adminSpin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="sidebar-layout">
+{% include 'sidebar.html' %}
+
+<div class="main-content">
+  <div class="page-header">
+    <div>
+      <div class="page-subtitle">Data enrichment · Algo controls</div>
+      <h1 class="page-title">Admin</h1>
+    </div>
+    <div class="page-header-actions">
+      <!-- Tab toggle -->
+      <div class="seg-ctrl" id="tabToggle">
+        <div class="seg-btn active" data-tab="data" onclick="switchTab('data')">Data &amp; Algo</div>
+        <div class="seg-btn" data-tab="users" onclick="switchTab('users')">Users</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- ══════════════ DATA TAB ══════════════ -->
+    <div id="tabData">
+
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+      <!-- Scraper -->
+      <div class="a-section">
+        <div class="a-section-head">
+          <div class="a-section-title">Scraper</div>
+          <div class="a-section-sub">Realtime Telegram listener · session management</div>
+        </div>
+        <div class="a-section-body">
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+
+            <!-- Status badges -->
+            <div style="flex:1;min-width:240px">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Status</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px" id="scraperBadges">
+                <div class="status-badge idle"><div class="status-dot idle"></div><span class="status-text">Loading...</span></div>
+              </div>
+            </div>
+
+            <!-- Session upload -->
+            <div style="min-width:220px">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Telegram Session</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="file" id="sessionFile" accept=".session" style="display:none" onchange="onSessionFile(this)"/>
+                <button class="a-btn" onclick="document.getElementById('sessionFile').click()" style="font-family:var(--font-mono);font-size:12px">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 2v8M3 6l4-4 4 4"/><path d="M2 10v2h10v-2"/></svg>
+                  <span id="sessionFileName">Choose .session</span>
+                </button>
+                <button class="a-btn primary" id="uploadBtn" onclick="uploadSession()" disabled>Upload</button>
+              </div>
+              <div id="sessionOk" style="display:none;font-size:11px;color:var(--up);margin-top:4px;font-family:var(--font-mono)"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Coverage (Table / Heatmap) -->
+      <div class="a-section">
+        <div class="a-section-head">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="a-section-title">Data Coverage</div>
+              <div class="a-section-sub">Data completeness per table</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <div id="hmNavWrap" style="display:none;align-items:center;gap:6px">
+                <button class="a-btn small" id="hmBtnPrev" onclick="hmNav(-1)">&#8249;</button>
+                <span id="hmMonthLabel" style="font-size:13px;font-weight:600;color:var(--ink);min-width:100px;text-align:center"></span>
+                <button class="a-btn small" id="hmBtnNext" onclick="hmNav(1)">&#8250;</button>
+              </div>
+              <div class="seg-ctrl" id="covViewToggle">
+                <div class="seg-btn active" data-view="table" onclick="switchCovView('table')">Table</div>
+                <div class="seg-btn" data-view="heatmap" onclick="switchCovView('heatmap')">Heatmap</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="a-section-body">
+
+          <div id="covViewTable">
+            <table class="cov-table">
+              <thead><tr>
+                <th class="cov-th" style="text-align:left">Channel</th>
+                <th class="cov-th">First Data</th>
+                <th class="cov-th">Latest Data</th>
+                <th class="cov-th">Total Rows</th>
+              </tr></thead>
+              <tbody id="covTableBody">
+                <tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="covViewHeatmap" style="display:none">
+            <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Status</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim)"><span style="width:11px;height:11px;border-radius:3px;background:#4caf74;display:inline-block"></span>Complete</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim)"><span style="width:11px;height:11px;border-radius:3px;background:#c87d3a;display:inline-block"></span>Partial</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim)"><span style="width:11px;height:11px;border-radius:3px;background:#c03838;display:inline-block"></span>Empty</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim)"><span style="width:11px;height:11px;border-radius:3px;background:var(--surface3);border:1px solid var(--border);display:inline-block"></span>Holiday/Weekend</span>
+            </div>
+            <div id="hmGrid" style="overflow-x:auto"></div>
+            <div id="hmGaps" style="margin-top:14px"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Algo Settings -->
+      <div class="a-section">
+        <div class="a-section-head">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div>
+              <div class="a-section-title">Algo Settings</div>
+              <div class="a-section-sub">Backfill data and recompute analytics</div>
+            </div>
+            <div class="seg-ctrl" id="algoToggle">
+              <div class="seg-btn active" data-algo="wyckoff" onclick="switchAlgo('wyckoff')">Wyckoff</div>
+              <div class="seg-btn" data-algo="bsjp" onclick="switchAlgo('bsjp')">BSJP</div>
+            </div>
+          </div>
+        </div>
+        <div class="a-section-body">
+
+          <!-- Wyckoff panel -->
+          <div id="algoWyckoff">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Date Range</div>
+              <button class="a-btn small" onclick="showDataReq('wyckoff')">ℹ Data requirements</button>
+            </div>
+            <div id="wyckoffDP"></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+              <button class="a-btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" id="btnEnrichW" onclick="runEnrich('wyckoff')">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg>
+                Enrich Telegram
+              </button>
+              <button class="a-btn primary" id="btnRecomputeW" onclick="runAction('recompute_w')">Wyckoff Signals</button>
+              <button class="a-btn" id="btnFetchDaily" onclick="runAction('fetch_daily')">Price History (Daily)</button>
+              <button class="a-btn" id="btnEodSummary" onclick="runAction('eod_summary')">EOD Summary</button>
+              <button class="a-btn" id="btnRecomputePfW" onclick="runAction('recompute_pf_w')">Recompute Portfolio</button>
+            </div>
+            <div id="enrichWStatus" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--muted);min-height:16px"></div>
+            <div id="progWyckoff" style="display:none" class="a-progress"><div class="a-progress-fill anim" id="progWyckoffFill"></div></div>
+          </div>
+
+          <!-- BSJP panel -->
+          <div id="algoBSJP" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Date Range</div>
+              <button class="a-btn small" onclick="showDataReq('bsjp')">ℹ Data requirements</button>
+            </div>
+            <div id="bsjpDP"></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+              <button class="a-btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" id="btnEnrichB" onclick="runEnrich('bsjp')">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg>
+                Enrich Telegram
+              </button>
+              <button class="a-btn primary" id="btnRecomputeB" onclick="runAction('recompute_b')">BSJP Signals</button>
+              <button class="a-btn" id="btnFetch15m" onclick="runAction('fetch_15m')">Price History (15m)</button>
+              <button class="a-btn" id="btnRecomputePfB" onclick="runAction('recompute_pf_b')">Recompute Portfolio</button>
+            </div>
+            <div id="enrichBStatus" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--muted);min-height:16px"></div>
+            <div id="progBSJP" style="display:none" class="a-progress"><div class="a-progress-fill anim" id="progBSJPFill"></div></div>
+
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Syariah backfill</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Fills in <code>universe=syariah</code> signals for dates that already have full signals but not syariah. Insert-only — never deletes or overwrites existing full signals.</div>
+              <button class="a-btn" id="btnSyrBackfill" onclick="runSyariahBackfill()">Backfill Syariah (all dates)</button>
+              <div id="syrBackfillStatus" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--muted);min-height:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Corporate Actions -->
+      <div class="a-section">
+        <div class="a-section-head">
+          <div class="a-section-title">Corporate Actions</div>
+          <div class="a-section-sub">Stock split / right issue — ticker <b>confirmed</b> is excluded from Portfolio, BSJP signal, and trade history. <b>Suspected</b> = auto-detected every evening, not excluded until you approve.</div>
+        </div>
+        <div class="a-section-body">
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Ticker</div>
+              <input class="a-input" id="caTicker" style="width:100px;text-transform:uppercase" maxlength="10" placeholder="RAJA">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Type</div>
+              <select class="a-select" id="caType">
+                <option value="stock_split">Stock Split (SS)</option>
+                <option value="rights_issue">Right Issue (RI)</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Effective Date</div>
+              <input class="a-input" id="caDate" type="date" style="width:150px">
+            </div>
+            <div style="flex:1;min-width:160px">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Detail (optional)</div>
+              <input class="a-input" id="caDetail" placeholder="e.g. Ratio 1:5">
+            </div>
+            <button class="a-btn primary" onclick="caAdd()">+ Add</button>
+          </div>
+          <div id="caPendingWrap" style="margin-bottom:14px;display:none">
+            <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px">⚠ Needs Review — auto-detected</div>
+            <table class="cov-table">
+              <thead><tr>
+                <th class="cov-th" style="text-align:left">Ticker</th>
+                <th class="cov-th">Date</th>
+                <th class="cov-th" style="text-align:left">Detail</th>
+                <th class="cov-th"></th>
+              </tr></thead>
+              <tbody id="caPendingBody"></tbody>
+            </table>
+          </div>
+          <table class="cov-table">
+            <thead><tr>
+              <th class="cov-th" style="text-align:left">Ticker</th>
+              <th class="cov-th" style="text-align:left">Type</th>
+              <th class="cov-th">Date</th>
+              <th class="cov-th" style="text-align:left">Detail</th>
+              <th class="cov-th"></th>
+            </tr></thead>
+            <tbody id="caTableBody">
+              <tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      </div><!-- /admin-main -->
+
+    </div><!-- /tabData -->
+
+    <!-- ══════════════ USERS TAB ══════════════ -->
+    <div id="tabUsers" style="display:none">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+        <!-- Add user -->
+        <div class="a-section" style="height:100%">
+          <div class="a-section-head"><div class="a-section-title">Add User</div></div>
+          <div class="a-section-body">
+            <div style="display:flex;flex-direction:column;gap:8px;max-width:320px">
+              <input type="text" class="a-input" id="newUsername" placeholder="username" autocomplete="off"/>
+              <input type="password" class="a-input" id="newPassword" placeholder="password" autocomplete="new-password"/>
+              <div style="display:flex;gap:8px">
+                <select class="a-select" id="newRole" style="flex:1">
+                  <option value="guest">guest</option>
+                  <option value="admin">admin</option>
+                </select>
+                <select class="a-select" id="newMode" style="flex:1" title="Stock universe visible to this user">
+                  <option value="general">general</option>
+                  <option value="syariah">syariah</option>
+                </select>
+              </div>
+              <div style="display:flex;justify-content:flex-end">
+                <button class="a-btn primary" id="addUserBtn" onclick="addUser()">Add User</button>
+              </div>
+              <div id="addUserMsg" style="font-size:12px;min-height:16px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User list -->
+        <div class="a-section" style="height:100%">
+          <div class="a-section-head"><div class="a-section-title">User List</div></div>
+          <div class="a-section-body">
+            <div id="userList" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto">
+              <div style="color:var(--muted);font-size:13px">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Keys -->
+      <div class="a-section" style="margin-top:14px">
+        <div class="a-section-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div class="a-section-title">API Keys</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px;text-transform:none;letter-spacing:0" id="apiKeyQuota">Loading...</div>
+          </div>
+          <button class="a-btn primary" id="createKeyBtn" onclick="createApiKey()" style="flex-shrink:0">+ Create API key</button>
+        </div>
+        <div class="a-section-body">
+          <div style="max-height:320px;overflow-y:auto;overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+              <colgroup>
+                <col style="width:18%"><col style="width:28%"><col style="width:15%"><col style="width:19%"><col style="width:20%">
+              </colgroup>
+              <thead>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 10px 10px;position:sticky;top:0;background:var(--surface)">Name</th>
+                  <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 10px 10px;position:sticky;top:0;background:var(--surface)">Key</th>
+                  <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 10px 10px;position:sticky;top:0;background:var(--surface)">Environment</th>
+                  <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 10px 10px;position:sticky;top:0;background:var(--surface)">Last Used</th>
+                  <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 10px 10px;position:sticky;top:0;background:var(--surface)">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="apiKeyList"><tr><td colspan="5" style="padding:20px 10px;text-align:center;color:var(--muted);font-size:13px">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tabUsers -->
+
+  </div><!-- /page-body -->
+</div><!-- /main-content -->
+
+<!-- Data requirements modal -->
+<div class="modal-overlay" id="dataReqModal">
+  <div class="modal-box" style="width:min(90vw,480px);max-height:78vh;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div id="dataReqTitle" style="font-size:16px;font-weight:600;color:var(--ink)"></div>
+      <button onclick="closeDataReq()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1">✕</button>
+    </div>
+    <div id="dataReqBody" style="overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<!-- Create API Key modal -->
+<div class="modal-overlay" id="createKeyModal">
+  <div class="modal-box" style="width:min(90vw,420px)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div style="font-size:16px;font-weight:600;color:var(--ink)">Create API Key</div>
+      <button onclick="closeCreateKeyModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1">✕</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-dim);line-height:1.5;margin-bottom:20px">Create a new API key for authentication. The key will only be shown once.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink)">Key Name</label>
+      <input type="text" class="a-input" id="createKeyName" placeholder="Default"/>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:22px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink)">Environment</label>
+      <select class="a-select" id="createKeyEnv">
+        <option value="live">Live</option>
+        <option value="test">Test</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="a-btn" onclick="closeCreateKeyModal()">Cancel</button>
+      <button class="a-btn primary" id="createKeySubmitBtn" onclick="confirmCreateApiKey()">Create Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- New key reveal modal (shown once, right after creation) -->
+<div class="modal-overlay" id="revealKeyModal">
+  <div class="modal-box" style="width:min(90vw,460px)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div style="font-size:16px;font-weight:600;color:var(--ink)">API Key Created</div>
+      <button onclick="closeRevealKeyModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1">✕</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-dim);line-height:1.5;margin-bottom:16px">Copy this key now — it will not be shown again after this modal is closed.</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+      <code id="revealKeyValue" style="flex:1;overflow-x:auto;white-space:nowrap;font-family:var(--font-mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--ink)"></code>
+      <button class="a-btn small" id="revealKeyCopyBtn" onclick="copyRevealKey()">Copy</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="a-btn primary" onclick="closeRevealKeyModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:24px">
+  <div onclick="event.stopPropagation()" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:min(90vw,380px);padding:24px 24px 20px;box-shadow:0 16px 48px rgba(0,0,0,.15)">
+    <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:6px" id="confirmTitle">Confirm</div>
+    <div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px" id="confirmDesc"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="a-btn" onclick="closeConfirm()">Cancel</button>
+      <button class="a-btn danger" id="confirmOkBtn">Yes, continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="a-toast success" style="display:none"></div>
+
+<script src="/static/zenith-utils.js"></script>
+<script>
+(function(){
+var currentTab  = 'data';
+var currentAlgo = 'wyckoff';
+var loadingAction = null;
+
+/* Date pickers */
+var today = window.todayLocal();
+var wyckoffDates  = { from: today, to: today };
+var bsjpDates     = { from: today, to: today };
+
+var dpWyckoff = new window.StockbitDatePicker('wyckoffDP', {
+  from: today, to: today,
+  onChange: function(f, t) { wyckoffDates.from = f; wyckoffDates.to = t || f; }
+});
+var dpBsjp = new window.StockbitDatePicker('bsjpDP', {
+  from: today, to: today,
+  onChange: function(f, t) { bsjpDates.from = f; bsjpDates.to = t || f; }
+});
+fetch('/api/last-date',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){if(d.date){var iso=window.DD_MM_YYYYtoISO(d.date.replace(/\//g,'-'));wyckoffDates.from=wyckoffDates.to=bsjpDates.from=bsjpDates.to=iso;dpWyckoff.setDates(iso,iso);dpBsjp.setDates(iso,iso);}}).catch(function(){});
+
+window.switchCovView = function(view) {
+  document.getElementById('covViewTable').style.display   = view === 'table' ? '' : 'none';
+  document.getElementById('covViewHeatmap').style.display = view === 'heatmap' ? '' : 'none';
+  document.getElementById('hmNavWrap').style.display = view === 'heatmap' ? 'flex' : 'none';
+  document.querySelectorAll('#covViewToggle .seg-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+};
+
+/* Tab switching */
+window.switchTab = function(tab) {
+  currentTab = tab;
+  document.getElementById('tabData').style.display  = tab === 'data'  ? '' : 'none';
+  document.getElementById('tabUsers').style.display = tab === 'users' ? '' : 'none';
+  document.querySelectorAll('#tabToggle .seg-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  if (tab === 'users') { loadUsers(); loadApiKeys(); }
+};
+
+/* Algo switching */
+window.switchAlgo = function(algo) {
+  currentAlgo = algo;
+  document.getElementById('algoWyckoff').style.display = algo === 'wyckoff' ? '' : 'none';
+  document.getElementById('algoBSJP').style.display    = algo === 'bsjp'    ? '' : 'none';
+  document.querySelectorAll('#algoToggle .seg-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.algo === algo);
+  });
+};
+
+/* Toast */
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'a-toast ' + (type || 'success');
+  el.style.display = 'flex';
+  setTimeout(function() { el.style.display = 'none'; }, 2800);
+}
+
+/* Per-action progress polling config */
+var PROGRESS_CONFIGS = {
+  fetch_15m: {
+    statusUrl: '/admin/intraday-progress',
+    runningText: function(s) {
+      return s.done + ' / ' + s.total + (s.current ? ' · ' + s.current : '')
+           + ' · ' + s.rows_inserted + ' rows'
+           + (s.failed_count ? ' · ' + s.failed_count + ' failed' : '');
+    },
+    doneText: function(s) {
+      return '✓ Done · ' + s.rows_inserted + ' rows · ' + s.failed_count + ' failed';
+    },
+    toastLabel: 'Price History (15m)'
+  },
+  recompute_w: {
+    statusUrl: '/admin/wyckoff-recompute-status',
+    runningText: function(s) {
+      return s.done + ' / ' + s.total + (s.current_date ? ' · ' + s.current_date : '');
+    },
+    doneText: function(s) { return '✓ Done · ' + s.done + ' dates'; },
+    toastLabel: 'Recompute Analytics'
+  },
+  recompute_b: {
+    statusUrl: '/admin/bsjp-recompute-status',
+    runningText: function(s) {
+      return s.done + ' / ' + s.total + (s.current_date ? ' · ' + s.current_date : '')
+           + (s.signals ? ' · ' + s.signals + ' signals' : '');
+    },
+    doneText: function(s) { return '✓ Done · ' + s.done + ' dates · ' + (s.signals || 0) + ' signals'; },
+    toastLabel: 'BSJP Signals'
+  },
+  fetch_daily: {
+    statusUrl: '/admin/prices-progress',
+    runningText: function(s) {
+      return s.done + ' / ' + s.total + (s.current ? ' · ' + s.current : '')
+           + (s.step ? ' · ' + s.step : '');
+    },
+    doneText: function(s) { return '✓ Done · ' + (s.prices_updated || 0) + ' prices · ' + (s.analytics_recomputed || 0) + ' analytics'; },
+    toastLabel: 'Fetch OHLCV Daily'
+  },
+  eod_summary: {
+    statusUrl: '/admin/eod-summary-status',
+    runningText: function(s) {
+      return s.done + ' / ' + s.total + (s.current_date ? ' · ' + s.current_date : '');
+    },
+    doneText: function(s) { return '✓ Done · ' + s.done + ' dates'; },
+    toastLabel: 'EOD Summary'
+  },
+  recompute_pf_w: {
+    statusUrl: '/admin/portfolio-recompute-status',
+    runningText: function(s) { return 'Recomputing Wyckoff + BSJP simulation...'; },
+    doneText: function(s) { return '✓ Portfolio updated'; },
+    toastLabel: 'Recompute Portfolio'
+  },
+  recompute_pf_b: {
+    statusUrl: '/admin/portfolio-recompute-status',
+    runningText: function(s) { return 'Recomputing Wyckoff + BSJP simulation...'; },
+    doneText: function(s) { return '✓ Portfolio updated'; },
+    toastLabel: 'Recompute Portfolio'
+  }
+};
+
+/* Action buttons */
+window.runAction = function(action) {
+  if (loadingAction) return;
+  loadingAction = action;
+  var btnMap = { fetch_daily:'btnFetchDaily', recompute_w:'btnRecomputeW', rebuild:'btnRebuild', fetch_15m:'btnFetch15m', recompute_b:'btnRecomputeB', eod_summary:'btnEodSummary', recompute_pf_w:'btnRecomputePfW', recompute_pf_b:'btnRecomputePfB' };
+  var isBsjpAction = (action === 'fetch_15m' || action === 'recompute_b' || action === 'recompute_pf_b');
+  var progId  = isBsjpAction ? 'progBSJP' : 'progWyckoff';
+  var statusId = isBsjpAction ? 'enrichBStatus' : 'enrichWStatus';
+  var btn = document.getElementById(btnMap[action]);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(0,0,0,.3);border-top-color:currentColor;border-radius:99px;animation:adminSpin .6s linear infinite"></span> Processing...'; }
+  document.getElementById(progId).style.display = '';
+  var fill = document.getElementById(progId+'Fill');
+
+  var cfg = PROGRESS_CONFIGS[action];
+  if (cfg) {
+    fill.className = 'a-progress-fill';
+    fill.style.width = '0%';
+  } else {
+    /* Reset fake animation for actions without real progress */
+    fill.className = 'a-progress-fill'; fill.offsetHeight; fill.className = 'a-progress-fill anim';
+    fill.style.width = '';
+  }
+
+  var dates = (action === 'fetch_15m' || action === 'recompute_b') ? bsjpDates : wyckoffDates;
+  var from = window.isoToDD_MM_YYYY(dates.from), to = window.isoToDD_MM_YYYY(dates.to);
+  var url;
+  if (action === 'fetch_daily')  url = '/admin/backfill-prices?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  else if (action === 'recompute_w') url = '/admin/wyckoff-recompute?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  else if (action === 'rebuild') url = '/admin/rebuild-summary';
+  else if (action === 'fetch_15m') url = '/admin/backfill-intraday?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  else if (action === 'recompute_b') url = '/admin/bsjp-recompute?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  else if (action === 'eod_summary') url = '/admin/eod-summary-rebuild?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to);
+  else if (action === 'recompute_pf_w' || action === 'recompute_pf_b') url = '/admin/portfolio-recompute';
+
+  var statEl = document.getElementById(statusId);
+
+  function finishAction(msgType, msg) {
+    loadingAction = null;
+    document.getElementById(progId).style.display = 'none';
+    if (statEl) statEl.textContent = '';
+    resetBtn(btnMap[action]);
+    toast(msg, msgType);
+  }
+
+  function startPolling() {
+    var pollIv = setInterval(function() {
+      fetch(cfg.statusUrl)
+        .then(function(r){ return r.json(); })
+        .then(function(s) {
+          if (s.status === 'running') {
+            var pct = s.total > 0 ? Math.min(99, (s.done / s.total * 100)) : 2;
+            fill.style.width = pct + '%';
+            if (statEl) statEl.textContent = cfg.runningText(s);
+          } else if (s.status === 'done') {
+            clearInterval(pollIv);
+            fill.style.width = '100%';
+            if (statEl) statEl.textContent = cfg.doneText(s);
+            toast(cfg.toastLabel + ' done ✓', 'success');
+            setTimeout(function() {
+              document.getElementById(progId).style.display = 'none';
+              if (statEl) statEl.textContent = '';
+            }, 4000);
+            loadingAction = null;
+            resetBtn(btnMap[action]);
+          } else if (s.status === 'error') {
+            clearInterval(pollIv);
+            if (statEl) statEl.textContent = 'Error: ' + (s.error || '?');
+            finishAction('error', 'Error: ' + (s.error || '?'));
+          }
+        }).catch(function(){});
+    }, 1500);
+  }
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (!d.ok) {
+        finishAction('error', 'Error: ' + (d.error || '?'));
+        return;
+      }
+      if (cfg) {
+        startPolling();
+      } else {
+        finishAction(d.ok===false?'error':'success', d.message || (d.ok ? 'Done ✓' : 'Error: '+(d.error||'?')));
+      }
+    }).catch(function(e) {
+      finishAction('error', 'Failed: '+e.message);
+    });
+};
+
+/* Syariah backfill — separate from runAction: no date range (always targets
+   every date missing a syariah slice), and insert-only so it carries none of
+   the "this will rewrite history" caution the other BSJP actions need. */
+var _syrBackfillPoll = null;
+window.runSyariahBackfill = function() {
+  var btn = document.getElementById('btnSyrBackfill');
+  var statEl = document.getElementById('syrBackfillStatus');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  statEl.style.color = 'var(--muted)';
+  statEl.textContent = 'Starting...';
+
+  fetch('/admin/bsjp-syariah-backfill').then(function(r){ return r.json(); }).then(function(d) {
+    if (!d.ok) {
+      btn.disabled = false;
+      statEl.style.color = 'var(--down)';
+      statEl.textContent = 'Error: ' + (d.error || '?');
+      return;
+    }
+    _syrBackfillPoll = setInterval(function() {
+      fetch('/admin/bsjp-syariah-backfill-status').then(function(r){ return r.json(); }).then(function(s) {
+        if (s.status === 'running') {
+          statEl.style.color = 'var(--muted)';
+          statEl.textContent = 'Processing ' + (s.done||0) + ' / ' + (s.total||0) + ' dates...';
+        } else if (s.status === 'done') {
+          clearInterval(_syrBackfillPoll);
+          btn.disabled = false;
+          statEl.style.color = 'var(--up)';
+          statEl.textContent = '✓ Done — ' + (s.done||0) + ' dates processed.';
+          toast('Syariah backfill done ✓', 'success');
+        } else if (s.status === 'error') {
+          clearInterval(_syrBackfillPoll);
+          btn.disabled = false;
+          statEl.style.color = 'var(--down)';
+          statEl.textContent = 'Error: ' + (s.error || '?');
+        }
+      }).catch(function(){});
+    }, 1500);
+  }).catch(function(e) {
+    btn.disabled = false;
+    statEl.style.color = 'var(--down)';
+    statEl.textContent = 'Failed: ' + e.message;
+  });
+};
+
+var BTN_LABELS = {
+  btnFetchDaily: 'Price History (Daily)', btnRecomputeW: 'Wyckoff Signals', btnEodSummary: 'EOD Summary',
+  btnFetch15m: 'Price History (15m)', btnRecomputeB: 'BSJP Signals',
+  btnRecomputePfW: 'Recompute Portfolio', btnRecomputePfB: 'Recompute Portfolio'
+};
+function resetBtn(id) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = false;
+  btn.textContent = BTN_LABELS[id] || id;
+}
+
+/* ── Enrich Telegram (wyckoff-recompute / bsjp-recompute) ── */
+var _enrichPolls = { wyckoff: null, bsjp: null };
+
+window.runEnrich = function(algo) {
+  var btnId    = algo === 'wyckoff' ? 'btnEnrichW' : 'btnEnrichB';
+  var statusId = algo === 'wyckoff' ? 'enrichWStatus' : 'enrichBStatus';
+  var statusUrl= '/admin/tele-backfill-status';
+  var dates    = algo === 'wyckoff' ? wyckoffDates : bsjpDates;
+  var from     = window.isoToDD_MM_YYYY(dates.from);
+  var to       = window.isoToDD_MM_YYYY(dates.to);
+  var startUrl = '/admin/tele-backfill?date_from=' + encodeURIComponent(from) + '&date_to=' + encodeURIComponent(to);
+
+  var btn    = document.getElementById(btnId);
+  var statEl = document.getElementById(statusId);
+
+  if (_enrichPolls[algo]) return; /* already running */
+
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:99px;animation:adminSpin .6s linear infinite"></span> Starting...';
+
+  fetch(startUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (!d.ok) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg> Enrich Telegram';
+        toast('Error: ' + (d.error || '?'), 'error');
+        return;
+      }
+      statEl.textContent = 'Started...';
+      _enrichPolls[algo] = setInterval(function() {
+        fetch(statusUrl)
+          .then(function(r){ return r.json(); })
+          .then(function(s) {
+            if (s.status === 'running') {
+              statEl.textContent = 'Fetching Telegram... scanned=' + (s.scanned||0) + ' saved=' + (s.saved||0);
+            } else if (s.status === 'done') {
+              clearInterval(_enrichPolls[algo]);
+              _enrichPolls[algo] = null;
+              btn.disabled = false;
+              btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg> Enrich Telegram';
+              var extra = ' · scanned=' + (s.scanned||0) + ' saved=' + (s.saved||0);
+              statEl.textContent = '✓ Done' + extra;
+              toast('Enrich Telegram done ✓' + extra, 'success');
+            } else if (s.status === 'error') {
+              clearInterval(_enrichPolls[algo]);
+              _enrichPolls[algo] = null;
+              btn.disabled = false;
+              btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg> Enrich Telegram';
+              statEl.textContent = 'Error: ' + (s.error || '?');
+              toast('Enrich failed: ' + (s.error || '?'), 'error');
+            }
+          }).catch(function(){});
+      }, 2000);
+    })
+    .catch(function(e) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.9 2.1a1 1 0 0 0-1-.3L1.6 5.6a1 1 0 0 0 .1 1.9l3.8 1 1 3.8a1 1 0 0 0 1.9.1l3.8-11.3a1 1 0 0 0-.3-1z"/></svg> Enrich Telegram';
+      toast('Failed: ' + e.message, 'error');
+    });
+};
+
+/* Load scraper status */
+function loadScraperStatus() {
+  fetch('/admin/scraper-status')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      /* Status badges */
+      var alive   = d.thread_alive;
+      var backfill= d.backfill_running;
+      var rebuild = d.rebuild_running;
+      var recomp  = d.recompute_running;
+      var badges = [
+        ['SCRAPER',   alive,   alive],
+        ['BACKFILL',  backfill, backfill],
+        ['REBUILD',   rebuild,  rebuild],
+        ['RECOMPUTE', recomp,   recomp],
+      ];
+      document.getElementById('scraperBadges').innerHTML = badges.map(function(b) {
+        var isAlive = !!b[1];
+        return '<div class="status-badge '+(isAlive?'alive':'idle')+'">'+
+          '<div class="status-dot '+(isAlive?'alive':'idle')+'"></div>'+
+          '<span class="status-text">'+b[0]+(isAlive?': ALIVE':': IDLE')+'</span>'+
+          '</div>';
+      }).join('');
+
+      /* Coverage table */
+      var first = d.first_data || {}, latest = d.latest_data || {}, counts = d.row_counts || {};
+      var chLabels = [
+        { label: 'SM',  color: '#4a7fdb' },
+        { label: 'BM',  color: '#c87d3a' },
+        { label: 'MF+', color: '#3a6b58' },
+        { label: 'MF-', color: '#c8633a' },
+        { label: 'EOD Summary', color: '#9a9080', key: 'summary' },
+      ];
+      document.getElementById('covTableBody').innerHTML = chLabels.map(function(ch) {
+        var k = ch.key || ch.label;
+        var cnt = counts[k] || counts[ch.label] || 0;
+        return '<tr class="cov-tr">'+
+          '<td class="cov-td" style="text-align:left">'+
+            '<div style="display:flex;align-items:center;gap:8px">'+
+              '<div style="width:22px;height:22px;border-radius:5px;background:'+ch.color+';flex-shrink:0"></div>'+
+              '<span style="font-size:12px;color:var(--text-dim)">'+ch.label+'</span>'+
+            '</div>'+
+          '</td>'+
+          '<td class="cov-td">'+(first[ch.label]||'—')+'</td>'+
+          '<td class="cov-td">'+(latest[ch.label]||'—')+'</td>'+
+          '<td class="cov-td" style="font-weight:700;color:var(--ink)">'+(cnt?cnt.toLocaleString('id-ID'):'—')+'</td>'+
+        '</tr>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('scraperBadges').innerHTML = '<div class="status-badge idle"><div class="status-dot idle"></div><span class="status-text">Failed to load</span></div>';
+    });
+}
+
+/* Session file upload */
+window.onSessionFile = function(input) {
+  if (!input.files[0]) return;
+  document.getElementById('sessionFileName').textContent = input.files[0].name;
+  document.getElementById('uploadBtn').disabled = false;
+};
+window.uploadSession = function() {
+  var file = document.getElementById('sessionFile').files[0];
+  if (!file) return;
+  var fd = new FormData();
+  fd.append('session', file);
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadBtn').textContent = 'Uploading...';
+  fetch('/admin/upload-session', { method:'POST', body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      document.getElementById('uploadBtn').disabled = false;
+      document.getElementById('uploadBtn').textContent = 'Upload';
+      if (d.ok) {
+        document.getElementById('sessionOk').style.display = '';
+        document.getElementById('sessionOk').textContent = '✓ ' + file.name + ' uploaded';
+        toast('Session file uploaded ✓', 'success');
+      } else {
+        toast('Upload failed: '+(d.error||'?'), 'error');
+      }
+    }).catch(function(e) {
+      document.getElementById('uploadBtn').disabled = false;
+      document.getElementById('uploadBtn').textContent = 'Upload';
+      toast('Failed: '+e.message, 'error');
+    });
+};
+
+/* Users */
+function loadUsers() {
+  fetch('/admin/users')
+    .then(function(r){ return r.json(); })
+    .then(function(users) {
+      if (!users.length) {
+        document.getElementById('userList').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No users yet.</div>';
+        return;
+      }
+      document.getElementById('userList').innerHTML = users.map(function(u) {
+        var isAdmin = u.role === 'admin';
+        var avBg    = isAdmin ? 'var(--accent)' : 'var(--surface)';
+        var avCol   = isAdmin ? '#fff' : 'var(--muted)';
+        var mode    = u.mode || 'general';
+        var isSyr   = mode === 'syariah';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:9px;border:1px solid var(--border)">'+
+          '<div style="display:flex;align-items:center;gap:10px">'+
+            '<div class="user-av" style="background:'+avBg+';border:1px solid var(--border);color:'+avCol+'">'+u.username[0].toUpperCase()+'</div>'+
+            '<span style="font-size:13px;font-weight:500;color:var(--ink);font-family:var(--font-mono)">'+u.username+'</span>'+
+            '<span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;background:'+(isAdmin?'var(--accent-soft)':'var(--surface)')+';border:1px solid var(--border);color:'+(isAdmin?'var(--accent)':'var(--text-dim)')+'">'+u.role+'</span>'+
+            '<span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;background:'+(isSyr?'var(--up-soft, var(--surface))':'var(--surface)')+';border:1px solid var(--border);color:'+(isSyr?'var(--up)':'var(--text-dim)')+'">'+mode+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<button class="a-btn small" onclick="toggleUserMode('+u.id+',\''+mode+'\')" title="Change this user\'s stock universe">→ '+(isSyr?'general':'syariah')+'</button>'+
+            '<button class="a-btn danger small" onclick="deleteUser('+u.id+',\''+u.username+'\')">Delete</button>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('userList').innerHTML = '<div style="color:var(--down);font-size:13px">Failed to load user list.</div>';
+    });
+}
+
+window.toggleUserMode = function(id, current) {
+  var next = current === 'syariah' ? 'general' : 'syariah';
+  fetch('/admin/users/mode/'+id, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: next })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d.ok) loadUsers(); })
+    .catch(function(){});
+};
+
+window.addUser = function() {
+  var username = document.getElementById('newUsername').value.trim();
+  var password = document.getElementById('newPassword').value.trim();
+  var role     = document.getElementById('newRole').value;
+  var mode     = document.getElementById('newMode').value;
+  var msgEl    = document.getElementById('addUserMsg');
+  if (!username || !password) { msgEl.style.color='var(--down)'; msgEl.textContent='Username and password are required.'; return; }
+  var btn = document.getElementById('addUserBtn');
+  btn.disabled = true;
+  fetch('/admin/users/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username, password: password, role: role, mode: mode })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      btn.disabled = false;
+      if (d.ok) {
+        msgEl.style.color = 'var(--up)'; msgEl.textContent = '✓ User "'+username+'" added.';
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        loadUsers();
+      } else {
+        msgEl.style.color = 'var(--down)'; msgEl.textContent = d.error || 'Failed to add user.';
+      }
+    }).catch(function() { btn.disabled=false; msgEl.style.color='var(--down)'; msgEl.textContent='Network error.'; });
+};
+
+/* Data requirements modal */
+var DATA_REQS = {
+  wyckoff: {
+    title: 'Wyckoff — data required per ticker',
+    items: [
+      'eod_summary row exists for that date',
+      'sm_val > 0 (SM flow present from Telegram)',
+      'bm_val ≠ 0 (BM flow present)',
+      'tx_sm > 0 and tx_bm > 0',
+      'SM/BM history at least 1 day prior (for SRI & Gate A)',
+      'price_history at least 1 row (for price_close)',
+      'price_history ≥ 5 rows (for MA5 + price_change_pct)',
+      'price_history ≥ 34 rows (for MA34 → MA structure)',
+      'price_history ≥ 200 rows (for MA200 → macro context)',
+    ]
+  },
+  bsjp: {
+    title: 'BSJP — data required per ticker',
+    items: [
+      'ticker_universe.is_active = TRUE',
+      'price_history row exists for that date',
+      'price_history ≥ 5 rows (MA5 + streak)',
+      'price_history ≥ 20 rows (Bollinger Bands)',
+      'price_history ≥ 50 rows (MA50)',
+      'price_history ≥ 200 rows (MA200)',
+      'volume not null',
+    ]
+  }
+};
+window.showDataReq = function(algo) {
+  var d = DATA_REQS[algo];
+  if (!d) return;
+  document.getElementById('dataReqTitle').textContent = d.title;
+  document.getElementById('dataReqBody').innerHTML = d.items.map(function(t, i) {
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 12px;background:var(--surface2);border-radius:8px">' +
+      '<span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);flex-shrink:0;margin-top:1px">' + String(i+1).padStart(2,'0') + '</span>' +
+      '<span style="font-size:12.5px;color:var(--text-dim);line-height:1.5">' + t + '</span>' +
+    '</div>';
+  }).join('');
+  document.getElementById('dataReqModal').classList.add('open');
+};
+window.closeDataReq = function() {
+  document.getElementById('dataReqModal').classList.remove('open');
+};
+document.getElementById('dataReqModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDataReq();
+});
+
+/* API Keys */
+function fmtKeyDate(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  if (isNaN(d)) return '—';
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+}
+function loadApiKeys() {
+  fetch('/admin/api-keys')
+    .then(function(r){ return r.json(); })
+    .then(function(keys) {
+      document.getElementById('apiKeyQuota').textContent = keys.length + ' API key' + (keys.length===1?'':'s') + ' active.';
+      var body = document.getElementById('apiKeyList');
+      if (!keys.length) {
+        body.innerHTML = '<tr><td colspan="5" style="padding:20px 10px;text-align:center;color:var(--muted);font-size:13px">No API keys yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = keys.map(function(k) {
+        return '<tr style="border-bottom:1px solid var(--border)">' +
+          '<td style="padding:12px 10px;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + k.name + '</td>' +
+          '<td style="padding:12px 10px;overflow:hidden"><code style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-family:var(--font-mono);font-size:11.5px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text-dim)">' + k.key_prefix + '••••••••</code></td>' +
+          '<td style="padding:12px 10px"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:var(--ink);color:var(--bg);font-size:11px;font-weight:600">' + k.environment + '</span></td>' +
+          '<td style="padding:12px 10px;font-size:12.5px;color:var(--text-dim);white-space:nowrap">' + (k.last_used_at ? fmtKeyDate(k.last_used_at) : 'Never') + '</td>' +
+          '<td style="padding:12px 10px;text-align:right"><button onclick="deleteApiKey(' + k.id + ',\'' + k.name.replace(/'/g,"\\'") + '\')" title="Delete key" style="background:none;border:none;cursor:pointer;color:var(--danger);padding:4px">' +
+            '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4h11M6 4V2.5h4V4M3.5 4l.7 9.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4"/></svg>' +
+          '</button></td>' +
+        '</tr>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('apiKeyList').innerHTML = '<tr><td colspan="5" style="padding:20px 10px;text-align:center;color:var(--down);font-size:13px">Failed to load API keys.</td></tr>';
+    });
+}
+window.createApiKey = function() {
+  document.getElementById('createKeyName').value = '';
+  document.getElementById('createKeyEnv').value = 'live';
+  document.getElementById('createKeyModal').classList.add('open');
+};
+window.closeCreateKeyModal = function() {
+  document.getElementById('createKeyModal').classList.remove('open');
+};
+document.getElementById('createKeyModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateKeyModal();
+});
+window.confirmCreateApiKey = function() {
+  var name = document.getElementById('createKeyName').value.trim() || 'Default';
+  var environment = document.getElementById('createKeyEnv').value;
+  var btn = document.getElementById('createKeySubmitBtn');
+  btn.disabled = true;
+  fetch('/admin/api-keys/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, environment: environment })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      btn.disabled = false;
+      if (d.ok) {
+        closeCreateKeyModal();
+        loadApiKeys();
+        document.getElementById('revealKeyValue').textContent = d.key;
+        document.getElementById('revealKeyModal').classList.add('open');
+      } else {
+        toast('Failed to create key: ' + (d.error || '?'), 'error');
+      }
+    }).catch(function(e) { btn.disabled = false; toast('Failed: ' + e.message, 'error'); });
+};
+window.closeRevealKeyModal = function() {
+  document.getElementById('revealKeyModal').classList.remove('open');
+  document.getElementById('revealKeyValue').textContent = '';
+};
+
+/* ── Corporate Actions ── */
+var CA_TYPE_LABEL = { stock_split: 'Stock Split (SS)', rights_issue: 'Right Issue (RI)' };
+function caLoad() {
+  fetch('/admin/corporate-events')
+    .then(function(r){ return r.json(); })
+    .then(function(rows) {
+      var body    = document.getElementById('caTableBody');
+      var pending = rows.filter(function(r){ return r.status === 'suspected'; });
+      var settled = rows.filter(function(r){ return r.status !== 'suspected'; });
+
+      var pBody = document.getElementById('caPendingBody');
+      document.getElementById('caPendingWrap').style.display = pending.length ? '' : 'none';
+      pBody.innerHTML = pending.map(function(r) {
+        var args = '\'' + r.ticker + '\',\'' + r.event_type + '\',\'' + r.event_date + '\'';
+        return '<tr class="cov-tr">' +
+          '<td class="cov-td" style="text-align:left;font-weight:700;color:var(--ink)">' + r.ticker + '</td>' +
+          '<td class="cov-td">' + r.event_date + '</td>' +
+          '<td class="cov-td" style="text-align:left;font-size:11px;color:var(--muted)">' + (r.detail || '—') + '</td>' +
+          '<td class="cov-td" style="white-space:nowrap">' +
+            '<select class="a-select" id="caNewType_' + r.ticker + '" style="width:110px;margin-right:6px">' +
+              '<option value="stock_split">Stock Split</option>' +
+              '<option value="rights_issue">Right Issue</option>' +
+            '</select>' +
+            '<button class="a-btn small primary" onclick="caApprove(' + args + ')">Approve</button> ' +
+            '<button class="a-btn small" onclick="caReject(' + args + ')">Reject</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      if (!settled.length) {
+        body.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No corporate actions yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = settled.map(function(r) {
+        var rejected = r.status === 'rejected';
+        return '<tr class="cov-tr"' + (rejected ? ' style="opacity:.5"' : '') + '>' +
+          '<td class="cov-td" style="text-align:left;font-weight:700;color:var(--ink)">' + r.ticker +
+            (rejected ? ' <span style="font-weight:600;font-size:9px;color:var(--muted)">REJECTED</span>' : '') + '</td>' +
+          '<td class="cov-td" style="text-align:left">' + (CA_TYPE_LABEL[r.event_type] || r.event_type) + '</td>' +
+          '<td class="cov-td">' + r.event_date + '</td>' +
+          '<td class="cov-td" style="text-align:left">' + (r.detail || '—') + '</td>' +
+          '<td class="cov-td"><button class="a-btn small" onclick="caDelete(\'' + r.ticker + '\',\'' + r.event_type + '\',\'' + r.event_date + '\')">Delete</button></td>' +
+        '</tr>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('caTableBody').innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--danger);font-size:13px">Failed to load.</td></tr>';
+    });
+}
+window.caAdd = function() {
+  var ticker = document.getElementById('caTicker').value.trim().toUpperCase();
+  var type   = document.getElementById('caType').value;
+  var dateIn = document.getElementById('caDate').value;
+  var detail = document.getElementById('caDetail').value.trim();
+  if (!ticker || !dateIn) { toast('Ticker and date are required', 'error'); return; }
+  var p = dateIn.split('-');
+  var eventDate = p[2] + '-' + p[1] + '-' + p[0];
+  fetch('/admin/corporate-events/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker: ticker, event_type: type, event_date: eventDate, detail: detail })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        document.getElementById('caTicker').value = '';
+        document.getElementById('caDate').value = '';
+        document.getElementById('caDetail').value = '';
+        caLoad();
+        toast('Corporate action added ✓', 'success');
+      } else {
+        toast('Failed: ' + (d.error || '?'), 'error');
+      }
+    }).catch(function(e) { toast('Failed: ' + e.message, 'error'); });
+};
+window.caApprove = function(ticker, eventType, eventDate) {
+  var sel = document.getElementById('caNewType_' + ticker);
+  fetch('/admin/corporate-events/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker: ticker, event_type: eventType, event_date: eventDate,
+                           new_type: sel ? sel.value : 'stock_split' })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok) { caLoad(); toast(ticker + ' confirmed — excluded from Portfolio & BSJP ✓', 'success'); }
+      else { toast('Failed: ' + (d.error || '?'), 'error'); }
+    }).catch(function(e) { toast('Failed: ' + e.message, 'error'); });
+};
+window.caReject = function(ticker, eventType, eventDate) {
+  fetch('/admin/corporate-events/reject', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker: ticker, event_type: eventType, event_date: eventDate })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok) { caLoad(); toast(ticker + ' rejected — will not be flagged again', 'success'); }
+      else { toast('Failed: ' + (d.error || '?'), 'error'); }
+    }).catch(function(e) { toast('Failed: ' + e.message, 'error'); });
+};
+window.caDelete = function(ticker, eventType, eventDate) {
+  fetch('/admin/corporate-events/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker: ticker, event_type: eventType, event_date: eventDate })
+  }).then(function(r){ return r.json(); })
+    .then(function(d) { if (d.ok) caLoad(); else toast('Failed to delete: ' + (d.error||'?'), 'error'); })
+    .catch(function(e) { toast('Failed: ' + e.message, 'error'); });
+};
+document.getElementById('revealKeyModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRevealKeyModal();
+});
+window.copyRevealKey = function() {
+  var val = document.getElementById('revealKeyValue').textContent;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(function() {
+    var btn = document.getElementById('revealKeyCopyBtn');
+    var orig = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(function() { btn.textContent = orig; }, 1500);
+  }).catch(function() { toast('Failed to copy, copy manually', 'error'); });
+};
+window.deleteApiKey = function(id, name) {
+  document.getElementById('confirmTitle').textContent = 'Delete API key "'+name+'"?';
+  document.getElementById('confirmDesc').textContent  = 'Any application still using this key will immediately lose access to /api/v1/*.';
+  document.getElementById('confirmOkBtn').onclick = function() {
+    closeConfirm();
+    fetch('/admin/api-keys/delete/'+id, {method:'POST'})
+      .then(function(){ loadApiKeys(); toast('API key "'+name+'" deleted ✓', 'success'); })
+      .catch(function(){ toast('Failed to delete API key', 'error'); });
+  };
+  document.getElementById('confirmModal').style.display = 'flex';
+};
+
+/* Confirm modal */
+var pendingConfirm = null;
+window.deleteUser = function(id, username) {
+  pendingConfirm = { id: id, username: username };
+  document.getElementById('confirmTitle').textContent = 'Delete user "'+username+'"?';
+  document.getElementById('confirmDesc').textContent  = 'This user will be permanently deleted and cannot be recovered.';
+  document.getElementById('confirmOkBtn').onclick = function() {
+    closeConfirm();
+    fetch('/admin/users/delete/'+id, {method:'POST'})
+      .then(function(){ loadUsers(); toast('User "'+username+'" deleted ✓', 'success'); })
+      .catch(function(){ toast('Failed to delete user', 'error'); });
+  };
+  document.getElementById('confirmModal').style.display = 'flex';
+};
+window.closeConfirm = function() {
+  document.getElementById('confirmModal').style.display = 'none';
+  pendingConfirm = null;
+};
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+/* Init */
+loadScraperStatus();
+caLoad();
+})();
+</script>
+
+<script>
+/* ── Data Coverage Heatmap ── */
+(function(){
+function hmToast(msg, type) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'a-toast ' + (type || 'success');
+  el.style.display = 'flex';
+  setTimeout(function() { el.style.display = 'none'; }, 2800);
+}
+var HM_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var HM_GROUPS = [
+  {label:'RAW',      keys:['raw_messages','raw_mf_messages']},
+  {label:'EOD',      keys:['eod_summary','price_history']},
+  {label:'INTRADAY', keys:['price_history_15m']},
+  {label:'SIGNALS',  keys:['bsjp_signals','wyckoff_signals']},
+];
+var HM_BACKFILL = {
+  'price_history_15m': '/admin/backfill-intraday',
+  'price_history':     '/admin/backfill-prices',
+  'eod_summary':       '/admin/eod-summary-rebuild',
+  'bsjp_signals':      '/admin/bsjp-recompute',
+  'wyckoff_signals':   '/admin/wyckoff-recompute',
+};
+
+var hmYear, hmMonth, hmData;
+var hmNow = new Date();
+
+function hmDays(y, m) { return new Date(y, m, 0).getDate(); }
+
+function hmFmt(y, m, d) {
+  return (d<10?'0':'')+d+'-'+(m<10?'0':'')+m+'-'+y;
+}
+
+function hmStatus(key, y, m, d) {
+  var dow = new Date(y, m-1, d).getDay();
+  if (dow===0||dow===6) return 'off';
+  var today = new Date(hmNow.getFullYear(), hmNow.getMonth(), hmNow.getDate());
+  if (new Date(y, m-1, d) > today) return 'future';
+  if (!hmData||!hmData[key]) return 'empty';
+  var cnt = hmData[key].days[String(d)]||0;
+  if (!cnt) return 'empty';
+  return cnt >= hmData[key].max*0.5 ? 'full' : 'partial';
+}
+
+function hmCellBg(s) {
+  if (s==='full')    return '#4caf74';
+  if (s==='partial') return '#c87d3a';
+  if (s==='empty')   return '#c03838';
+  if (s==='off')     return 'var(--surface3)';
+  return 'var(--surface2)';
+}
+function hmCellBorder(s) { return s==='off'?'border:1px solid var(--border);':''; }
+function hmStatusTxt(s) {
+  return s==='full'?'Complete':s==='partial'?'Partial':s==='empty'?'Empty':s==='off'?'Holiday':'—';
+}
+
+function hmRenderSkeleton(y, m) {
+  var days = hmDays(y, m);
+  var h = '<table style="border-collapse:collapse;width:100%;opacity:.4;pointer-events:none"><colgroup><col style="width:140px"/>';
+  for (var i=1;i<=days;i++) h+='<col style="width:16px"/>';
+  h+='</colgroup><thead><tr><th style="padding:0 0 5px;text-align:left;font-size:11px;font-weight:400;color:var(--muted)">Table</th>';
+  for (var i=1;i<=days;i++) {
+    var we=new Date(y,m-1,i).getDay(); we=we===0||we===6;
+    h+='<th style="padding:0 0 4px;text-align:center;font-size:9px;font-weight:400;color:'+(we?'var(--border2)':'var(--muted)')+'">'+i+'</th>';
+  }
+  h+='</tr></thead><tbody>';
+  var first=true;
+  HM_GROUPS.forEach(function(grp){
+    if(!first) h+='<tr><td colspan="'+(days+1)+'" style="height:5px"></td></tr>';
+    first=false;
+    h+='<tr><td colspan="'+(days+1)+'" style="padding:0 0 3px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">'+grp.label+'</td></tr>';
+    grp.keys.forEach(function(key){
+      h+='<tr><td style="padding:2px 8px 2px 0;font-size:11px;font-family:var(--font-mono);color:var(--text-dim)">'+key+'</td>';
+      for(var d=1;d<=days;d++){
+        h+='<td style="padding:1px"><div style="height:18px;border-radius:3px;background:var(--surface3)"></div></td>';
+      }
+      h+='</tr>';
+    });
+  });
+  h+='</tbody></table>';
+  document.getElementById('hmGrid').innerHTML=h;
+}
+
+function hmRenderGrid(y, m) {
+  var days = hmDays(y, m);
+  var h = '<table style="border-collapse:collapse;width:100%;"><colgroup><col style="width:140px"/>';
+  for (var i=1;i<=days;i++) h+='<col style="width:16px"/>';
+  h+='</colgroup><thead><tr><th style="padding:0 0 5px;text-align:left;font-size:11px;font-weight:400;color:var(--muted)">Table</th>';
+  for (var i=1;i<=days;i++) {
+    var we=new Date(y,m-1,i).getDay(); we=we===0||we===6;
+    h+='<th style="padding:0 0 4px;text-align:center;font-size:9px;font-weight:400;color:'+(we?'var(--border2)':'var(--muted)')+'">'+i+'</th>';
+  }
+  h+='</tr></thead><tbody>';
+  var first=true;
+  HM_GROUPS.forEach(function(grp){
+    if(!first) h+='<tr><td colspan="'+(days+1)+'" style="height:5px"></td></tr>';
+    first=false;
+    h+='<tr><td colspan="'+(days+1)+'" style="padding:0 0 3px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">'+grp.label+'</td></tr>';
+    grp.keys.forEach(function(key){
+      h+='<tr><td style="padding:2px 8px 2px 0;font-size:11px;font-family:var(--font-mono);color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+key+'</td>';
+      for(var d=1;d<=days;d++){
+        var st=hmStatus(key,y,m,d);
+        var bg=hmCellBg(st), bdr=hmCellBorder(st);
+        h+='<td style="padding:1px" title="'+key+' · '+hmFmt(y,m,d)+': '+hmStatusTxt(st)+'"><div style="height:18px;border-radius:3px;background:'+bg+';'+bdr+'"></div></td>';
+      }
+      h+='</tr>';
+    });
+  });
+  h+='</tbody></table>';
+  document.getElementById('hmGrid').innerHTML=h;
+  hmRenderGaps(y,m,days);
+}
+
+function hmRenderGaps(y,m,days){
+  var gaps=[];
+  HM_GROUPS.forEach(function(grp){
+    grp.keys.forEach(function(key){
+      var miss=[];
+      for(var d=1;d<=days;d++) if(hmStatus(key,y,m,d)==='empty') miss.push(hmFmt(y,m,d));
+      if(miss.length) gaps.push({key:key,dates:miss});
+    });
+  });
+  var el=document.getElementById('hmGaps');
+  if(!gaps.length){
+    el.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--up-soft);border-radius:var(--radius-lg);font-size:13px;color:var(--up)">✓ All data complete for this month.</div>';
+    return;
+  }
+  var h='<div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Missing data</div><div style="display:flex;flex-direction:column;gap:6px">';
+  gaps.forEach(function(g){
+    var url=HM_BACKFILL[g.key]||'';
+    var preview=g.dates.length>5?g.dates.slice(0,5).join(', ')+' +' +(g.dates.length-5)+' more':g.dates.join(', ');
+    h+='<div style="border-left:3px solid var(--danger);background:var(--down-soft);border-radius:var(--radius-lg);padding:10px 14px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">';
+    h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;font-family:var(--font-mono);color:var(--ink)">'+g.key+'</span><span style="font-size:11.5px;color:var(--danger)">'+g.dates.length+' empty days</span></div>';
+    if(url) h+='<button class="a-btn small" onclick="hmBackfill(\''+url+'\',\''+g.dates[0]+'\',\''+g.dates[g.dates.length-1]+'\',this)">Backfill →</button>';
+    h+='</div><div style="margin-top:4px;font-size:11px;font-family:var(--font-mono);color:var(--text-dim)">'+preview+'</div></div>';
+  });
+  el.innerHTML=h+'</div>';
+}
+
+function hmLoad(y,m){
+  hmYear=y; hmMonth=m;
+  document.getElementById('hmMonthLabel').textContent=HM_MONTHS[m-1]+' '+y;
+  document.getElementById('hmBtnPrev').disabled=false;
+  var ny=hmNow.getFullYear(),nm=hmNow.getMonth()+1;
+  document.getElementById('hmBtnNext').disabled=(y===ny&&m===nm);
+  hmRenderSkeleton(y, m);
+  document.getElementById('hmGaps').innerHTML='';
+  fetch('/admin/data-coverage?year='+y+'&month='+m)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      hmData={};
+      (d.sources||[]).forEach(function(src){
+        var vals=Object.values(src.days||{}).map(Number).filter(function(v){return v>0;});
+        hmData[src.key]={days:src.days||{},max:vals.length?Math.max.apply(null,vals):1};
+      });
+      hmRenderGrid(y,m);
+    })
+    .catch(function(){
+      document.getElementById('hmGrid').innerHTML='<div style="padding:12px 0;font-size:12px;color:var(--danger)">Failed to load. <button class="a-btn small" onclick="hmRetry()">Retry</button></div>';
+    });
+}
+
+window.hmNav=function(dir){
+  var m=hmMonth+dir,y=hmYear;
+  if(m<1){m=12;y--;} if(m>12){m=1;y++;}
+  var ny=hmNow.getFullYear(),nm=hmNow.getMonth()+1;
+  if(y>ny||(y===ny&&m>nm)) return;
+  hmLoad(y,m);
+};
+window.hmRetry=function(){ hmLoad(hmYear,hmMonth); };
+window.hmBackfill=function(url,from,to,btn){
+  btn.disabled=true; var orig=btn.textContent; btn.textContent='...';
+  fetch(url+'?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      btn.disabled=false; btn.textContent=orig;
+      hmToast(d.ok!==false?'Backfill started ✓':'Error: '+(d.error||'?'), d.ok!==false?'success':'error');
+      if(d.ok!==false) setTimeout(function(){hmLoad(hmYear,hmMonth);},2500);
+    })
+    .catch(function(e){btn.disabled=false;btn.textContent=orig;hmToast('Failed: '+e.message,'error');});
+};
+
+hmLoad(hmNow.getFullYear(), hmNow.getMonth()+1);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<script>(function(){var t=localStorage.getItem('zenith-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenith — Money Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/sidebar.css">
+<link rel="stylesheet" href="/static/components.css">
+<style>
+html, body { height: 100%; }
+body.sidebar-layout { overflow: hidden; }
+.main-content { overflow: hidden; display: flex; flex-direction: column; }
+.page-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.data-table { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.data-table-body { flex: 1; overflow-y: auto; min-height: 0; }
+.mf-cols {
+  grid-template-columns: 32px 1.75fr 0.38fr 0.75fr 0.68fr 0.68fr 0.58fr 0.72fr 0.72fr 0.82fr 0.82fr;
+}
+</style>
+</head>
+<body class="sidebar-layout">
+{% include 'sidebar.html' %}
+
+<div class="main-content">
+  <div class="page-header">
+    <div>
+      <div class="page-subtitle">SM · BM · Clean Money · RSM</div>
+      <h1 class="page-title">Money Flow</h1>
+    </div>
+    <div class="page-header-actions">
+      <div class="ihsg-pill">
+        <span class="ihsg-pill-label">IHSG</span>
+        <span class="ihsg-pill-price" id="ihsgPrice">—</span>
+        <span class="ihsg-pill-gain" id="ihsgGain">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="stat-cards-6">
+      <div class="stat-card">
+        <div class="stat-card-label">SM total</div>
+        <div class="stat-card-value up" id="statSM">—</div>
+        <div class="stat-card-sub" id="statSMSub">— stocks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">BM total</div>
+        <div class="stat-card-value down" id="statBM">—</div>
+        <div class="stat-card-sub" id="statBMSub">— stocks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Clean Money</div>
+        <div class="stat-card-value" id="statCM">—</div>
+        <div class="stat-card-sub">SM − BM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">MF+</div>
+        <div class="stat-card-value up" id="statMFP">—</div>
+        <div class="stat-card-sub">incoming money flow</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">MF−</div>
+        <div class="stat-card-value down" id="statMFM">—</div>
+        <div class="stat-card-sub">outgoing money flow</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Net MF</div>
+        <div class="stat-card-value" id="statNetMF">—</div>
+        <div class="stat-card-sub">MF+ − MF−</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-search">
+        <span class="toolbar-search-icon">⌕</span>
+        <input type="text" id="tickerSearch" placeholder="Search ticker..." autocomplete="off"/>
+        <button id="searchClear" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0">✕</button>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div id="datePicker"></div>
+      <div class="toolbar-spacer"></div>
+      <div class="filter-btn" id="filterBtn">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 3h12M3 7h8M5 11h4"/></svg>
+        Filters
+        <span class="filter-badge" id="filterBadge" style="display:none">0</span>
+        <span style="font-size:10px;margin-left:2px" id="filterChevron">▼</span>
+        <div class="filter-dropdown" id="filterDropdown">
+          <div class="filter-opt" data-key="netPos"><div class="filter-checkbox" data-key="netPos"></div>Net MF Positive</div>
+          <div class="filter-opt" data-key="cmPos"><div class="filter-checkbox" data-key="cmPos"></div>CM Positive</div>
+          <div class="filter-opt" data-key="tx10"><div class="filter-checkbox" data-key="tx10"></div>TX ≥ 10</div>
+          <div class="filter-sep"></div>
+          <button class="filter-clear" id="filterClear">Clear all</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-table">
+      <div class="data-table-head mf-cols">
+        <div>#</div>
+        <div class="th-sortable" data-col="ticker" style="justify-content:flex-start">Ticker <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="tx" style="text-align:right">TX <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable active" data-col="clean_money" style="text-align:right">Clean Money <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="sm_val" style="text-align:right">SM <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="bm_val" style="text-align:right">BM <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="rsm" style="text-align:right">RSM <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="mf_plus" style="text-align:right">MF+ <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="mf_minus" style="text-align:right">MF− <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="net_mf" style="text-align:right">Net MF <span class="sort-arrow">↓</span></div>
+        <div class="th-sortable" data-col="gain_pct" style="text-align:right">Last <span class="sort-arrow">↓</span></div>
+      </div>
+      <div class="data-table-body" id="tableBody">
+        <div style="padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Loading...</div>
+      </div>
+      <div class="data-table-foot">
+        <span id="rowCount">—</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="liveTs" style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/zenith-utils.js"></script>
+<script>
+(function(){
+var S={rows:[],filtered:[],dateFrom:'',dateTo:'',sortCol:'clean_money',sortAsc:false,q:'',filters:{netPos:false,cmPos:false,tx10:false},liveDate:null};
+var today=window.todayLocal();S.dateFrom=today;S.dateTo=today;
+var sdp=new window.StockbitDatePicker('datePicker',{from:today,to:today,onChange:function(f,t){S.dateFrom=f;S.dateTo=t;load();}});
+function fetchLastDate(cb){fetch('/api/last-date',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){if(d.date){var iso=window.DD_MM_YYYYtoISO(d.date.replace(/\//g,'-'));cb(iso);}}).catch(function(){});}
+fetchLastDate(function(iso){S.liveDate=iso;S.dateFrom=iso;S.dateTo=iso;sdp.setDates(iso,iso);load();});
+setTimeout(function(){if(!S.liveDate){S.liveDate=today;load();}},1500);
+window.loadIHSGBadge(document.getElementById('ihsgPrice'),document.getElementById('ihsgGain'));
+var sEl=document.getElementById('tickerSearch'),cBtn=document.getElementById('searchClear');
+sEl.addEventListener('input',function(){S.q=this.value.toUpperCase().trim();cBtn.style.display=S.q?'inline':'none';filter();});
+cBtn.addEventListener('click',function(){sEl.value='';S.q='';cBtn.style.display='none';filter();});
+var _colLabels={ticker:'Ticker',tx:'TX',clean_money:'Clean Money',sm_val:'SM',bm_val:'BM',rsm:'RSM',mf_plus:'MF+',mf_minus:'MF−',net_mf:'Net MF',gain_pct:'Last'};
+document.querySelectorAll('.th-sortable').forEach(function(th){th.addEventListener('click',function(){var col=th.dataset.col;S.sortCol===col?S.sortAsc=!S.sortAsc:(S.sortCol=col,S.sortAsc=false);document.querySelectorAll('.th-sortable').forEach(function(e){e.classList.remove('active');e.querySelector('.sort-arrow').textContent='↓';});th.classList.add('active');th.querySelector('.sort-arrow').textContent=S.sortAsc?'↑':'↓';filter();});});
+var fBtn=document.getElementById('filterBtn'),fDD=document.getElementById('filterDropdown');
+fBtn.addEventListener('click',function(e){e.stopPropagation();fDD.classList.toggle('open');document.getElementById('filterChevron').textContent=fDD.classList.contains('open')?'▲':'▼';});
+document.addEventListener('mousedown',function(e){if(!fBtn.contains(e.target)){fDD.classList.remove('open');document.getElementById('filterChevron').textContent='▼';}});
+document.querySelectorAll('.filter-opt').forEach(function(o){o.addEventListener('click',function(e){e.stopPropagation();var k=o.dataset.key;S.filters[k]=!S.filters[k];o.querySelector('.filter-checkbox').classList.toggle('checked',S.filters[k]);badge();filter();});});
+document.getElementById('filterClear').addEventListener('click',function(e){e.stopPropagation();Object.keys(S.filters).forEach(function(k){S.filters[k]=false;});document.querySelectorAll('.filter-checkbox').forEach(function(c){c.classList.remove('checked');});badge();filter();});
+function badge(){var c=Object.values(S.filters).filter(Boolean).length;var b=document.getElementById('filterBadge');b.textContent=c;b.style.display=c?'flex':'none';fBtn.classList.toggle('has-filters',c>0);}
+function filter(){var rows=S.rows.slice();if(S.q)rows=rows.filter(function(r){return r.ticker.startsWith(S.q);});if(S.filters.netPos)rows=rows.filter(function(r){return(r.net_mf||0)>0;});if(S.filters.cmPos)rows=rows.filter(function(r){return(r.clean_money||0)>0;});if(S.filters.tx10)rows=rows.filter(function(r){return(r.tx||0)>=10;});var col=S.sortCol;rows.sort(function(a,b){var av=a[col]!=null?a[col]:-999999,bv=b[col]!=null?b[col]:-999999;if(typeof av==='string')return S.sortAsc?av.localeCompare(bv):bv.localeCompare(av);return S.sortAsc?av-bv:bv-av;});S.filtered=rows;render();}
+function render(){var body=document.getElementById('tableBody'),rows=S.filtered;if(!rows.length){body.innerHTML='<div style="padding:48px 0;text-align:center;color:var(--muted);font-size:13px">No data.</div>';document.getElementById('rowCount').textContent='0 of '+S.rows.length+' stocks';return;}
+var maxCM=rows.reduce(function(m,r){return Math.max(m,Math.abs(r.clean_money||0));},1);
+body.innerHTML=rows.map(function(r,i){var nmf=r.net_mf,rC=r.rsm>60?'var(--up)':'var(--text-dim)';return'<div class="data-table-row mf-cols">'+
+'<div class="row-num'+(i<3?' top3':'')+'">'+String(i+1).padStart(2,'0')+'</div>'+
+'<div class="ticker-cell">'+'<div class="ticker-cell-info"><div class="ticker-cell-name">'+r.ticker+'</div><div class="ticker-cell-sub">'+(r.name||'')+'</div></div></div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:13px;color:'+(r.tx>=15?'var(--ink)':'var(--text-dim)')+';font-weight:'+(r.tx>=15?700:400)+'">'+( r.tx||'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:600;color:'+(r.clean_money>=0?'var(--up)':'var(--down)')+'">'+(r.clean_money!=null?window.fmtMoneySign(r.clean_money):'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--up)">'+(r.sm_val!=null?window.fmtMoney(r.sm_val):'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12px;color:#e07840">'+(r.bm_val!=null?window.fmtMoney(r.bm_val):'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12px;color:'+rC+'">'+(r.rsm!=null?r.rsm.toFixed(1)+'%':'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--up)">'+(r.mf_plus!=null?window.fmtMoney(r.mf_plus):'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--down)">'+(r.mf_minus!=null?window.fmtMoney(r.mf_minus):'—')+'</div>'+
+'<div style="text-align:right;font-family:var(--font-mono);font-size:12.5px;color:'+(nmf!=null?(nmf>=0?'var(--up)':'var(--down)'):'var(--text-dim)')+';font-weight:600">'+(nmf!=null?(nmf>=0?'+':'')+window.fmtMoney(nmf):'—')+'</div>'+
+'<div class="price-cell"><div class="price-cell-price">'+(r.price?window.fmtPrice(r.price):'—')+'</div><div class="price-cell-chg '+(r.gain_pct>=0?'up':'down')+'">'+(r.gain_pct!=null?window.fmtPct(r.gain_pct):'—')+'</div></div>'+
+'</div>';}).join('');
+document.getElementById('rowCount').textContent=rows.length+' of '+S.rows.length+' stocks';}
+function fetchData(silent){if(!silent)document.getElementById('tableBody').innerHTML='<div style="padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Loading...</div>';var from=window.isoToDD_MM_YYYY(S.dateFrom),to=window.isoToDD_MM_YYYY(S.dateTo);fetch('/api/flow?date_from='+encodeURIComponent(from)+'&date_to='+encodeURIComponent(to)).then(function(r){return r.json();}).then(function(d){S.rows=(d.tickers||[]).map(function(r){return Object.assign({name:''},r);});var t=d.totals||{},smT=t.sm||0,bmT=t.bm||0,cmT=t.net_cm||0,mfpT=t.mf_plus||0,mfmT=t.mf_minus||0,nmfT=t.net_mf||0,smC=S.rows.filter(function(r){return(r.sm_val||0)>0;}).length,bmC=S.rows.filter(function(r){return(r.bm_val||0)>0;}).length;document.getElementById('statSM').textContent='+'+window.fmtMoney(smT);document.getElementById('statSMSub').textContent=smC+' stocks';document.getElementById('statBM').textContent=window.fmtMoney(bmT);document.getElementById('statBMSub').textContent=bmC+' stocks';var cmEl=document.getElementById('statCM');cmEl.textContent=(cmT>=0?'+':'')+window.fmtMoney(cmT);cmEl.className='stat-card-value '+(cmT>=0?'up':'down');document.getElementById('statMFP').textContent=mfpT!=null?'+'+window.fmtMoney(mfpT):'—';document.getElementById('statMFM').textContent=mfmT!=null?window.fmtMoney(mfmT):'—';var nmfEl=document.getElementById('statNetMF');nmfEl.textContent=nmfT!=null?(nmfT>=0?'+':'')+window.fmtMoney(nmfT):'—';nmfEl.className='stat-card-value '+(nmfT>=0?'up':'down');var liveEl=document.getElementById('liveTs');if(liveEl){var now=new Date();liveEl.textContent='Updated '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');}filter();}).catch(function(){if(!silent)document.getElementById('tableBody').innerHTML='<div style="padding:48px 0;text-align:center;color:var(--muted);font-size:13px">Failed to load data.</div>';});}
+function load(){fetchData(false);}
+setInterval(function(){fetchLastDate(function(iso){var wasLive=(S.dateFrom===S.liveDate);if(iso!==S.liveDate&&wasLive){S.liveDate=iso;S.dateFrom=iso;S.dateTo=iso;sdp.setDates(iso,iso);}else{S.liveDate=iso;}if(S.dateFrom===S.liveDate)fetchData(true);});},30000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zenith — Access</title>
+<script>
+(function(){
+  var t = localStorage.getItem('zenith-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<style>
+html, body { height: 100%; overflow: hidden; }
+body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* ── Left panel ── */
+.login-left {
+  padding: 36px 56px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15.5px;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.login-logo-icon {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.login-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 420px;
+}
+.login-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px 5px 8px;
+  background: var(--accent-soft);
+  border-radius: 99px;
+  font-size: 11.5px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+.login-badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+.login-headline {
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: -.025em;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+.login-sub {
+  font-size: 15.5px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin: 0 0 32px;
+}
+.login-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-feature {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 14px;
+  align-items: flex-start;
+}
+.login-feature-check {
+  width: 20px; height: 20px;
+  border-radius: 99px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.login-feature-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.login-feature-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+.login-footer {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Right panel (sign-in card) ── */
+.login-right {
+  padding: 36px 56px;
+  background: var(--surface2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.login-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 36px 36px 32px;
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 24px 48px -24px rgba(40,30,20,.08);
+}
+[data-theme="dark"] .login-card {
+  box-shadow: 0 1px 0 rgba(255,255,255,.02), 0 24px 48px -24px rgba(0,0,0,.4);
+}
+.login-card-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -.015em;
+  margin-bottom: 6px;
+}
+.login-card-sub {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.form-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  margin-bottom: 16px;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.form-input::placeholder { color: var(--muted); }
+.pw-wrap { position: relative; margin-bottom: 16px; }
+.pw-wrap .form-input { margin-bottom: 0; padding-right: 44px; }
+.pw-toggle {
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; padding: 4px;
+}
+.pw-toggle:hover { color: var(--text); }
+.pw-icon-wrap { position: relative; width: 16px; height: 16px; }
+.pw-icon-wrap svg { position: absolute; top: 0; left: 0; transition: opacity 200ms ease, transform 200ms ease; }
+.pw-icon-open  { opacity: 1; transform: scale(1); }
+.pw-icon-slash { opacity: 0; transform: scale(0.7); }
+.pw-showing .pw-icon-open  { opacity: 0; transform: scale(0.7); }
+.pw-showing .pw-icon-slash { opacity: 1; transform: scale(1); }
+
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 24px;
+}
+.remember-check {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.remember-label { font-size: 13px; color: var(--text); cursor: pointer; }
+
+.btn-primary {
+  width: 100%;
+  padding: 12px 18px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-family: var(--font-sans);
+  transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .85; }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+.btn-google {
+  width: 100%;
+  padding: 12px 18px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: not-allowed;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: .55;
+  margin-bottom: 24px;
+  transition: opacity .15s;
+}
+
+.form-footer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.form-link {
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+.form-msg {
+  font-size: 12px;
+  min-height: 18px;
+  text-align: center;
+  margin-bottom: 12px;
+  transition: opacity .2s;
+}
+.form-msg.error { color: var(--danger); }
+.form-msg.success { color: var(--up); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  body { grid-template-columns: 1fr; overflow-y: auto; height: auto; }
+  .login-left { display: none; }
+  .login-right { min-height: 100vh; padding: 24px 20px; }
+  .login-card { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main</a>
+
+<!-- Left: marketing copy -->
+<div class="login-left">
+  <div class="login-logo">
+    <div class="login-logo-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style="position:relative;z-index:2"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z"/></svg>
+      <svg width="6" height="6" viewBox="0 0 24 24" fill="#fff" style="position:absolute;top:3px;right:3px;opacity:.85"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z"/></svg>
+      <svg width="4" height="4" viewBox="0 0 24 24" fill="#fff" style="position:absolute;bottom:3px;left:4px;opacity:.7"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z"/></svg>
+    </div>
+    Zenith
+  </div>
+
+  <div class="login-hero">
+    <div class="login-badge">
+      <div class="login-badge-dot"></div>
+      v2.0 · Algorithm refresh
+    </div>
+    <h1 class="login-headline">The quiet way to read the market.</h1>
+    <p class="login-sub">Smart Money &amp; Wyckoff analysis for IDX. Built for clarity. Designed so you can think.</p>
+
+    <div class="login-features">
+      <div class="login-feature">
+        <div class="login-feature-check">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="login-feature-title">Per-emiten flow ledger</div>
+          <div class="login-feature-desc">See accumulation as it happens</div>
+        </div>
+      </div>
+      <div class="login-feature">
+        <div class="login-feature-check">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="login-feature-title">Sector rotation lens</div>
+          <div class="login-feature-desc">Industries being bought, quietly</div>
+        </div>
+      </div>
+      <div class="login-feature">
+        <div class="login-feature-check">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="login-feature-title">Portfolio simulation</div>
+          <div class="login-feature-desc">Simulate equity growth before you commit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-footer">© Zenith Project · Machiavellia · 2026</div>
+</div>
+
+<!-- Right: sign-in card -->
+<div class="login-right">
+  <div class="login-card" id="main">
+    <div class="login-card-title">Welcome back</div>
+    <div class="login-card-sub">Sign in to your account to continue</div>
+
+    <label for="usernameInput" class="form-label">Username</label>
+    <input type="text" class="form-input" id="usernameInput"
+      placeholder="Enter username" autofocus autocomplete="username"/>
+
+    <div class="form-label-row">
+      <label for="passwordInput" class="form-label" style="margin-bottom:0">Password</label>
+      <span class="form-link" style="font-size:12px">Forgot?</span>
+    </div>
+    <div class="pw-wrap">
+      <input type="password" class="form-input" id="passwordInput"
+        placeholder="Password..." autocomplete="current-password"/>
+      <button type="button" class="pw-toggle" id="pwToggle" onclick="togglePw()" aria-label="Show password">
+        <div class="pw-icon-wrap" id="pwIconWrap">
+          <svg class="pw-icon-open" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M1 8C1 8 3.5 3 8 3S15 8 15 8S12.5 13 8 13S1 8 1 8Z"/>
+            <circle cx="8" cy="8" r="2.5"/>
+          </svg>
+          <svg class="pw-icon-slash" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M1 8C1 8 3.5 3 8 3S15 8 15 8S12.5 13 8 13S1 8 1 8Z"/>
+            <circle cx="8" cy="8" r="2.5"/>
+            <line x1="3" y1="3" x2="13" y2="13"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+
+    <div class="remember-row">
+      <div class="remember-check">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <span class="remember-label">Remember me for 30 days</span>
+    </div>
+
+    <div class="form-msg" id="msg" role="alert" aria-live="polite"></div>
+
+    <button class="btn-primary" id="authBtn" onclick="doAuth()">Sign in</button>
+
+
+    <div class="form-footer">
+      Don't have an account? <span class="form-link">Request access</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePw() {
+  var inp = document.getElementById('passwordInput');
+  var wrap = document.getElementById('pwIconWrap');
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  wrap.classList.toggle('pw-showing', show);
+  document.getElementById('pwToggle').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}
+
+async function doAuth() {
+  var username = document.getElementById('usernameInput').value.trim();
+  var password = document.getElementById('passwordInput').value.trim();
+  if (!username || !password) return;
+  var btn = document.getElementById('authBtn');
+  var msg = document.getElementById('msg');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    var fd = new FormData();
+    fd.append('username', username); fd.append('password', password);
+    var res = await fetch('/', { method: 'POST', body: fd });
+    var d = await res.json();
+    if (d.ok) {
+      msg.className = 'form-msg success'; msg.textContent = '✓ Access granted';
+      setTimeout(function(){ location.href = '/hub'; }, 500);
+    } else {
+      msg.className = 'form-msg error'; msg.textContent = '⚠ Invalid credentials';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('usernameInput').focus();
+      btn.disabled = false; btn.textContent = 'Sign in';
+    }
+  } catch(e) {
+    msg.className = 'form-msg error'; msg.textContent = '⚠ Network error';
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doAuth();
+});
+</script>
+</body>
+</html>

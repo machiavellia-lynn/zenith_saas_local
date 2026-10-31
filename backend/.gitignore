@@ -1,0 +1,38 @@
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# ── Environment & secrets (NEVER commit) ──────────────────────────────
+.env
+.env.local
+.env.production
+*.env
+
+# ── Telegram session files (contain auth tokens!) ─────────────────────
+*.session
+*.session-journal
+
+# ── Laptop catch-up runtime state (lock, log) ─────────────────────────
+ops/state/
+
+# ── Local data (DB, WAL, SHM) ─────────────────────────────────────────
+*.db
+*.db-wal
+*.db-shm
+
+# ── Lock files from scraper ───────────────────────────────────────────
+.run/
+*.lock
+
+# ── OS / editor cruft ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+# Added by code-review-graph
+.code-review-graph/

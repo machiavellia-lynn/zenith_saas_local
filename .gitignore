@@ -1,0 +1,41 @@
+# Dependencies / build output
+node_modules/
+dist/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets and sessions (never commit)
+.env
+*.env
+*.local
+*.session
+*.session-journal
+
+# Runtime state, local data, logs
+backend/ops/state/
+*.db
+*.db-wal
+*.db-shm
+*.dump
+*.log
+*.lock
+
+# Tool caches and scratch folders
+.code-review-graph/
+.claude/
+.claire/
+.dsh-acl-recovery/
+graphify-out/
+
+# Old handoff notes that still contain credentials (rotate them, then remove from this list)
+**/ZENITH_HANDOFF_v*.md
+
+# OS / editor
+.obsidian/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

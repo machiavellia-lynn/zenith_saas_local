@@ -1,0 +1,759 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   STOCK PAGE — one symbol, one session.
+
+   Two rows: the chart beside the SM/BM reading at 70:30, then the trade book
+   beside the broker summary at 50:50.
+
+   Follows the app-screen rules: colour goes on data rather than chrome, the
+   figure strip is one container split by tone steps rather than tiles, tables
+   are rules and alignment (no zebra, numbers right-aligned in tabular figures),
+   and a missing value prints as an em dash rather than a zero.
+
+   Every value comes from tokens.css. No raw hex here.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.stock-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--panel-pad) var(--cell-px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ── controls ─────────────────────────────────────────────────────────── */
+
+.stock-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  flex: none;
+}
+
+.stock-search {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.stock-search-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.stock-search-input {
+  width: 84px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  letter-spacing: 0.06em;
+  padding: var(--cell-py) var(--cell-px);
+}
+
+.stock-search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.stock-controls-spacer {
+  flex: 1;
+}
+
+.stock-session {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── title block ──────────────────────────────────────────────────────── */
+
+.stock-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  flex: none;
+}
+
+.stock-head-main {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  min-width: 0;
+}
+
+.stock-head-ticker {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.stock-head-name {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The session the figures belong to. Sits with the name so the header row
+   states what it is showing before any number is read. */
+.stock-head-date {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stock-head-price {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-head-last {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.stock-head-change {
+  font-size: var(--fs-md);
+}
+
+/* The one finding, directly under the title. Kept a paragraph, not a headline. */
+.stock-finding {
+  margin: 0;
+  font-size: var(--fs-base);
+  color: var(--text-dim);
+  flex: none;
+}
+
+/* ── session figures: one container, split by tone steps (no tiles) ───── */
+
+.stock-figures {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex: none;
+}
+
+.stock-figures .sm-cell {
+  padding: var(--cell-px) var(--gap);
+  border-right: 1px solid var(--border);
+}
+
+.stock-figures .sm-cell:last-child {
+  border-right: none;
+}
+
+/* ── the two rows ─────────────────────────────────────────────────────── */
+
+.stock-row {
+  display: grid;
+  gap: var(--gap);
+  flex: none;
+}
+
+/* Chart 70 · SM/BM 30 */
+.stock-row-top {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+  align-items: stretch;
+}
+
+/* Trade book 50 · Broker summary 50. Both size to their own content, so
+   neither card is stretched over empty space below its last row. */
+.stock-row-bottom {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.stock-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  min-width: 0;
+}
+
+.block-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  padding-bottom: var(--gap-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.block-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+
+.block-note {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The plot fills its card exactly: no padding of its own, so the chart's own
+   left edge is the card's left edge and no gap opens on either side. */
+/* The chart block is a card in the same sense as the panels beside it: the
+   frame wraps the title and the body together. While only the plot carried the
+   border, the chart's visible box started one header height lower than the
+   SM/BM card's and the two never lined up, at any height. */
+.stock-block-card,
+.stock-block-sm,
+.stock-block-book,
+.stock-block-broker {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--panel-pad);
+}
+
+/* The plot takes whatever height the row leaves it. The SVG already carries
+   preserveAspectRatio="none", so it stretches to fill instead of letterboxing,
+   and the card's bottom edge is the plot's bottom edge.
+   The min-height matters once the row stacks to one column: there the card is
+   auto-height and a flex:1 child with no content would collapse to nothing. */
+.stock-plot {
+  flex: 1;
+  min-height: 240px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.stock-plot .candle-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* Drag pans and the wheel zooms, so the browser must not scroll or select. */
+.candle-chart-pan {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.candle-chart-pan:active {
+  cursor: grabbing;
+}
+
+/* ── SM/BM panel ──────────────────────────────────────────────────────── */
+
+.sm-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sm-cell-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.sm-cell-value {
+  font-size: var(--fs-md);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sm-primary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap);
+  padding: var(--gap-sm) 0;
+}
+
+.sm-primary + .sm-primary {
+  border-top: 1px solid var(--border);
+}
+
+.sm-primary .sm-cell-value {
+  font-size: var(--fs-lg);
+}
+
+.sm-section-title {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  padding: var(--gap-sm) 0;
+  border-top: 1px solid var(--border);
+}
+
+.sm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap);
+}
+
+/* ── trade book ───────────────────────────────────────────────────────── */
+
+/* The table is as tall as its rows. It must not grow to fill the card, or the
+   card ends up with a band of empty surface under its last row. */
+.book-scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  max-height: 460px;
+}
+
+.book-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.book-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-muted);
+  text-align: right;
+  padding: var(--cell-py) var(--cell-px);
+  white-space: nowrap;
+}
+
+/* The frequency columns only ever hold four digits, so they take a fixed narrow
+   width instead of a share of the table. Left to auto-size they absorbed ~115px
+   each and the figures floated away from the columns they belong to.
+   Sell freq is pinned to the card's left edge; buy freq is pinned to its right. */
+.book-table th:first-child,
+.book-table td:first-child,
+.book-table th:last-child,
+.book-table td:last-child {
+  width: 64px;
+}
+
+.book-table th:first-child,
+.book-table td:first-child {
+  text-align: left;
+  padding-left: 0;
+  padding-right: var(--cell-px);
+}
+
+.book-table th:last-child,
+.book-table td:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+/* The lot columns are centred on their own axis, with the bar running behind
+   the figure, so the two sides read as a pair either side of the price. */
+.book-table th:nth-child(2),
+.book-table td:nth-child(2),
+.book-table th:nth-child(4),
+.book-table td:nth-child(4) {
+  text-align: center;
+  width: auto;
+}
+
+.book-table th:nth-child(3),
+.book-table td:nth-child(3) {
+  width: 72px;
+  text-align: center;
+}
+
+.book-table td {
+  height: var(--row-h);
+  padding: var(--cell-py) var(--cell-px);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.book-table .num {
+  text-align: right;
+}
+
+.book-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.book-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.book-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+/* The price is the pivot of the row: sell bars grow left out of it, buy bars
+   grow right, so the two sides are read against the same axis. */
+.book-table .book-price-col,
+.book-table .book-price {
+  text-align: center;
+}
+
+.book-table .book-price {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+
+.book-table .book-dim {
+  color: var(--text-muted);
+}
+
+.book-table tfoot td {
+  border-top: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-weight: var(--fw-medium);
+}
+
+/* ── the lot bars ─────────────────────────────────────────────────────── */
+
+/* The price is the row's pivot: sell bars grow left out of it, buy bars grow
+   right, both on the same scale, so the two sides are read against one axis.
+   Each bar is sized as a share of the widest lot on screen and pinned to the
+   price column by anchoring it to the far edge of its own cell. */
+.book-bar-cell {
+  position: relative;
+  min-width: 96px;
+  padding-left: var(--cell-px);
+  padding-right: var(--cell-px);
+}
+
+.book-bar-cell .book-bar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  /* Inset from BOTH edges of the cell. With `width: 100%` and one inset the
+     box was wider than the cell and bled 8px into the neighbouring column,
+     so a long sell bar overlapped the Sell freq figures. */
+  left: var(--cell-px);
+  right: var(--cell-px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/* Sell is anchored on the price side, so it scales leftward from there. */
+.book-bar-sell {
+  transform-origin: right center;
+  background: var(--down);
+}
+
+/* Buy is anchored on the price side too, scaling rightward. */
+.book-bar-buy {
+  transform-origin: left center;
+  background: var(--up);
+}
+
+.book-bar-value {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.book-bar-cell.num {
+  text-align: center;
+}
+
+.book-bar-value.up {
+  color: var(--up);
+}
+
+.book-bar-value.down {
+  color: var(--down);
+}
+
+/* ── broker summary ───────────────────────────────────────────────────── */
+
+.brk-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* The broker summary's head carries its controls on the same line, so this
+   head is taller than a plain one and its bottom rule still lines up with the
+   trade book's. */
+.block-head-broker {
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: var(--gap-sm);
+}
+
+.brk-switch {
+  display: inline-flex;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.brk-switch-btn {
+  background: var(--surface2);
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  padding: var(--cell-py) var(--gap);
+  cursor: pointer;
+}
+
+.brk-switch-btn + .brk-switch-btn {
+  border-left: 1px solid var(--border2);
+}
+
+.brk-switch-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.brk-switch-on {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.brk-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.brk-select-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.brk-select {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: var(--cell-py) var(--cell-px);
+  cursor: pointer;
+}
+
+.brk-select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* The two sides sit side by side and stay in one row on wide screens. */
+.brk-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+}
+
+.brk-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brk-col-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  padding-bottom: var(--gap-sm);
+}
+
+.brk-col-title {
+  font-size: var(--fs-sm);
+  color: var(--up);
+  letter-spacing: 0.06em;
+}
+
+.brk-col:nth-child(2) .brk-col-title {
+  color: var(--down);
+}
+
+.brk-col-note {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.brk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.brk-table thead th {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--cell-py) var(--cell-px);
+}
+
+.brk-table thead th.num {
+  text-align: right;
+}
+
+.brk-table td {
+  height: var(--row-h);
+  padding: var(--cell-py) var(--cell-px);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.brk-table td.num {
+  text-align: right;
+}
+
+.brk-table .brk-code {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+
+.brk-table .brk-dim {
+  color: var(--text-muted);
+}
+
+.brk-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.brk-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.brk-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.brk-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--gap) 0;
+}
+
+/* A block the data source cannot feed: say so, do not draw an empty table. */
+.block-unavailable {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+  padding: var(--gap) 0;
+}
+
+/* The last query failed; the figures below are still the previous ones. */
+.stock-notice {
+  color: var(--down);
+  font-size: var(--fs-sm);
+}
+
+/* ── direction colour, kept on the data ───────────────────────────────
+   `.sm-cell-value` and the table cells set a neutral colour from this file,
+   which loads after terminal.css, so the direction rules are restated here at
+   a higher specificity rather than relying on stylesheet order. */
+
+.stock-page .sm-cell-value.val-up,
+.stock-page .book-table td.val-up,
+.stock-page .brk-table td.val-up,
+.stock-page .stock-head-change.val-up,
+.stock-page .stock-finding .val-up {
+  color: var(--up);
+}
+
+.stock-page .sm-cell-value.val-down,
+.stock-page .book-table td.val-down,
+.stock-page .brk-table td.val-down,
+.stock-page .stock-head-change.val-down,
+.stock-page .stock-finding .val-down {
+  color: var(--down);
+}
+
+.stock-page .sm-cell-value.val-flat,
+.stock-page .book-table td.val-flat,
+.stock-page .brk-table td.val-flat {
+  color: var(--flat);
+}
+
+/* ── narrow ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  /* Below this the 30% column is too narrow for the ratio grid, so the chart
+     takes the full width and the SM/BM panel moves under it. */
+  .stock-row-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sm-primary,
+  .sm-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .stock-row-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stock-figures {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stock-figures .sm-cell:nth-child(3n) {
+    border-right: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .stock-head {
+    flex-wrap: wrap;
+  }
+
+  .stock-head-price {
+    margin-left: 0;
+  }
+
+  .stock-figures {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stock-figures .sm-cell:nth-child(3n) {
+    border-right: 1px solid var(--border);
+  }
+
+  .stock-figures .sm-cell:nth-child(2n) {
+    border-right: none;
+  }
+
+  .sm-primary,
+  .sm-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brk-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brk-col:nth-child(2) .brk-col-head {
+    border-top: 1px solid var(--border);
+    padding-top: var(--gap-sm);
+  }
+}
